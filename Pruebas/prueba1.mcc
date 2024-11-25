@@ -1,14 +1,23 @@
 
 class Hola{
-	int Hola(){
+	int a;
+	int hola;
+	int ave(){
+		int b;
+		int c;
+		a = 10;
+	}
+	void colibri(){
+		c = a;
 	}
 };
 
 
 
 
-/* int main(){
+int main(){
 
+	/*
 	int i;
 	int a;
 	int b;
@@ -16,7 +25,7 @@ class Hola{
 	int d;
 
 	printf("Hola mundo");
-	srintf(a,"hola");
+	sprintf(a,"hola",c);
 	scanf("%d", a);
 	-- a;
 	++ a;
@@ -24,11 +33,11 @@ class Hola{
 	a --;
 	
 	int Hola[];
-
+	*/
 	for (i = 0; i<10; i++){
 		a += 1;
 		b -= 1;
 		c *= 1;
 		d /= 1;
 	}
-} */
+}

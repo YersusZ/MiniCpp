@@ -50,10 +50,6 @@ class Parser(sly.Parser):
     @_("class_member_list")
     def class_body(self, p):
         return p.class_member_list
-    
-    @_("empty")
-    def class_body(self, p):
-        return []
 
     @_("class_member_list class_member")
     def class_member_list(self, p):
@@ -63,9 +59,13 @@ class Parser(sly.Parser):
     def class_member_list(self, p):
         return [ p.class_member ]
 
-    @_("type_spec IDENT '(' [ params ] ')' compound_stmt")
+    @_("method_decl", "var_decl")
     def class_member(self, p):
-        return FuncDeclStmt(p.type_spec, p.IDENT, p.params or [], p.compound_stmt)
+        return p[0]
+    
+    @_("type_spec IDENT '(' [ params ] ')' compound_stmt")
+    def method_decl(self, p):
+        return FuncDeclStmt(p.type_spec, p.IDENT, p.params, p.compound_stmt)
     
     @_("type_spec IDENT ';'")
     def var_decl(self, p):
@@ -168,7 +168,7 @@ class Parser(sly.Parser):
     def while_stmt(self, p):
         return WhileStmt(p.expr, p.stmt)
     
-    @_("FOR '(' expr ';' expr ';' expr ')' stmt")
+    @_("FOR '(' expr ';' expr ';' expr ';' ')' stmt")
     def for_stmt(self, p):
         return ForStmt(p.expr, p.expr, p.expr, p.stmt)
 
@@ -296,6 +296,7 @@ class Parser(sly.Parser):
 
     @_("PLUSPLUS expr ';'")
     def expr(self, p):
+        print(p[0], p.expr)
         return PreInc(p[0], p.expr)
     
     @_("MINUSMINUS expr ';'")

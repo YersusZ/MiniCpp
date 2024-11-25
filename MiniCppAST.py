@@ -124,7 +124,6 @@ class ClassDeclStmt(Declaration):
 class VarDeclStmt(Statement):
     _type  : str
     ident : str
-    expr : Expression = None
 
     @property
     def type(self):
