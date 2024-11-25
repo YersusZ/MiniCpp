@@ -1,0 +1,32 @@
+// isqrt.mcc
+
+int num;
+
+/* ********************************************* *
+ * Función: Raiz cuadrada entera.                *
+ *                                               *
+ * Usa el metodo de Newton para calcular         *
+ * iterativamente la sqrt(x).                    *
+ * ********************************************* *
+ */
+
+ int isqrt(int x) {
+    int guess;
+    int xprev;
+
+    xprev = x; 
+    // evitar que sqrt de numeros negativos
+    if (x < 0) return 0;
+    guess = xprev / 2;
+    while (guess != xprev) {
+        xprev = guess;
+        guess = (guess + x / guess) / 2;
+    }
+    return guess;
+ }
+
+ void main() {
+    int x;
+    num = 2;
+    x = isqrt(num);
+ }

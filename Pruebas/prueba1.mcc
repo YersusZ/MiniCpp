@@ -1,0 +1,28 @@
+class Hola{
+	hola();
+};
+
+int main(){
+	int i;
+	int a;
+	int b;
+	int c;
+	int d;
+
+	printf("Hola mundo");
+	srintf(a,"hola");
+	scanf("%d", a);
+	-- a;
+	++ a;
+	a ++;
+	a --;
+	
+	int Hola[];
+
+	for (i = 0; i<10; i++){
+		a += 1;
+		b -= 1;
+		c *= 1;
+		d /= 1;
+	} 
+}

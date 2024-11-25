@@ -1,0 +1,9 @@
+void hola(){
+    int y; 
+    y = 5;
+}
+
+int main() {
+    int x; 
+    x = 10;
+}
