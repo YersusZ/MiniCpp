@@ -50,6 +50,10 @@ class Parser(sly.Parser):
     @_("class_member_list")
     def class_body(self, p):
         return p.class_member_list
+    
+    @_("empty")
+    def class_body(self, p):
+        return []
 
     @_("class_member_list class_member")
     def class_member_list(self, p):
@@ -59,7 +63,7 @@ class Parser(sly.Parser):
     def class_member_list(self, p):
         return [ p.class_member ]
 
-    @_("type_spec IDENT '(' params ')' compound_stmt")
+    @_("type_spec IDENT '(' [ params ] ')' compound_stmt")
     def class_member(self, p):
         return FuncDeclStmt(p.type_spec, p.IDENT, p.params or [], p.compound_stmt)
     

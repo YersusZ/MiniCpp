@@ -1,8 +1,14 @@
+
 class Hola{
-	hola();
+	int Hola(){
+	}
 };
 
-int main(){
+
+
+
+/* int main(){
+
 	int i;
 	int a;
 	int b;
@@ -24,5 +30,5 @@ int main(){
 		b -= 1;
 		c *= 1;
 		d /= 1;
-	} 
-}
+	}
+} */

@@ -35,7 +35,6 @@ class SymbolTable:
     def get_symbol_table(self):
         print("Tabla de símbolos:\n")
         for i, scope in enumerate(self.env.maps):
-            print(f'Nivel de alcance {i}:')
             table = [[k, type(v).__name__] for k, v in scope.items()]
             print(tabulate(table, headers=["Variable", "Tipo"], tablefmt="grid"), "\n")
         print()
@@ -70,12 +69,14 @@ class Checker(Visitor):
             for p in n.params:
                 env.define(p.ident, p)
         n.stmts.accept(self, env)
+        env.pop_scope()
     
     def visit(self, n: ClassDeclStmt, env: SymbolTable):
         env.define(n.ident, n)
         env.push_scope()
         for decl in n.decls:
             decl.accept(self, env)
+        env.pop_scope()
 
     def visit(self, n: VarDeclStmt, env: SymbolTable):
         '''
@@ -90,10 +91,12 @@ class Checker(Visitor):
         1. Crear una tabla de simbolos
         2. Visitar Declaration/Statement
         '''
+        env.push_scope()
         for decl in n.decls:
             decl.accept(self, env)
         for stmt in n.stmts:
             stmt.accept(self, env)
+        env.pop_scope()
 
     def visit(self, n: IfStmt, env: SymbolTable):
         '''
