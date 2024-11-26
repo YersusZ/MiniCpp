@@ -11,7 +11,7 @@ class Lexer(sly.Lexer):
 
     tokens = {
         # palabras reservadas
-        'VOID', 'BOOL', 'INT', 'FLOAT', 'IF', 'ELSE', 'WHILE', 'RETURN', 'SPRINTF',
+        'VOID', 'BOOL', 'INT', 'FLOAT', 'IF', 'ELSE', 'WHILE', 'RETURN', 'SPRINTF', 'INTTOFLOAT', 'CAST',
         'BREAK', 'CONTINUE', 'SIZE', 'NEW', 'CLASS', 'FOR', 'PRINTF', 'SCANF', 'SUPER', 'THIS', 'POINT',
 
         # Operadores de Relacion
@@ -87,6 +87,8 @@ class Lexer(sly.Lexer):
     IDENT['printf']   = 'PRINTF'
     IDENT['scanf']    = 'SCANF'
     IDENT['sprintf']  = 'SPRINTF'
+    IDENT['IntToFloat'] = 'INTTOFLOAT'
+    IDENT['cast']     = 'CAST'
 
     @_(r'((0(?!\d))|([1-9]\d*))((\.\d+(e[-+]?\d+)?)|([eE][-+]?\d+))')
     def FLOAT_LIT(self, t):

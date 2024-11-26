@@ -123,6 +123,17 @@ class Checker(Visitor):
         '''
         1. Visitar n.init, n.cond, n.iter y n.stmt
         '''
+        if not isinstance(n.init, VarAssignmentExpr):
+            raise CheckError('La inicialización del ciclo for debe ser una asignación')
+        
+        if isinstance(n.cond, BinaryOpExpr):
+            if n.cond.opr != '<' and n.cond.opr != '>' and n.cond.opr != '<=' and n.cond.opr != '>=':
+                raise CheckError('La condición del ciclo for debe ser una comparación')  
+        else:
+            raise CheckError('La condición del ciclo for debe ser una expresión binaria')
+        
+        if not isinstance(n.iter, (PostDec, PreDec, PostInc, PreInc)):
+            raise CheckError('Debe ser un incremento/decremento')
         env.define('for', True)
         n.init.accept(self, env)
         n.cond.accept(self, env)
@@ -213,6 +224,10 @@ class Checker(Visitor):
 
     def visit(self, n: CastExpr, env: SymbolTable):
         n.expr.accept(self, env)
+        if not isinstance(n.expr, VarExpr):
+            raise CheckError(f"Cast no soportado: {n.expr}")
+        if n.expr.type == n._type:
+            raise CheckError(f"Cast innecesario: {n.expr.type} a {n._type}")
         if n._type not in typenames:
             raise CheckError(f"Tipo de cast no soportado: {n._type}")
         n.type = n._type
@@ -296,6 +311,9 @@ class Checker(Visitor):
         pass
     
     def visit(self, n: OperatorAssign, env: SymbolTable):
+        pass
+    
+    def visit(self, n: NullStmt, env: SymbolTable):
         pass
 
     def resolve_type(self, expr, env):

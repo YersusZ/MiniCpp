@@ -1,38 +1,8 @@
-/* 
-class Hola{
-	int a;
-	int hola;
-	int ave(){
-		int b;
-		int c;
-		a = 10;
-	}
-	void colibri(){
-		c = a;
-	}
-}; 
-*/
-
 int main(){
-
 	int i;
-	int a;
-	int b;
-	int c;
-	int d;
-
-	printf("Hola mundo");
-	sprintf(a,"hola",c);
-	scanf("%d", a);
-	-- a;
-	++ a;
-	a ++;
-	a --;
-
-	for (i = 0; i < 10; i++){
-		a += 1;
-		b -= 1;
-		c *= 1;
-		d /= 1;
+	for(i = 0; i<10; i++){
+		printf("Hola");
 	}
+	cast float (i);
+
 }

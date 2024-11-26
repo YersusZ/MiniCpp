@@ -268,9 +268,17 @@ class Parser(sly.Parser):
     def expr(self, p):
         return CallExpr(p.IDENT, p.args)
 
-    @_("IDENT '.' SIZE ';'")
+    @_("IDENT '.' SIZE")
     def expr(self, p):
         return SizeOfExpr(p.IDENT)
+    
+    @_("INTTOFLOAT '(' IDENT ')'")
+    def expr(self, p):
+        return IntToFloatExpr(p.IDENT)
+    
+    @_("CAST type_spec '(' expr ')'")
+    def expr(self, p):
+        return CastExpr(p.type_spec, p.expr)
 
     @_("BOOL_LIT", "INT_LIT", "FLOAT_LIT", "STRING")
     def expr(self, p):
