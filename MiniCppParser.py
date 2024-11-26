@@ -214,15 +214,15 @@ class Parser(sly.Parser):
     def expr(self, p):
         return This()
     
-    @_("SUPER POINT IDENT ';'")
+    @_("SUPER POINT IDENT")
     def expr(self, p):
         return Super(p.IDENT)
     
-    @_("expr POINT IDENT ';'")
+    @_("expr POINT IDENT")
     def expr(self, p):
         return Get(p.expr, p.IDENT)
     
-    @_("expr POINT IDENT '=' expr ';'")
+    @_("expr POINT IDENT '=' expr")
     def expr(self, p):
         return Set(p.expr0, p.IDENT, p.expr1)
     

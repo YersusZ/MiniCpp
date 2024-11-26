@@ -356,16 +356,23 @@ class RenderTreeVisitor(Visitor):
 
     def visit(self, n: ForStmt, parent_tree: Tree):
         for_node = parent_tree.add(f'[bold red]ForStmt[/bold red]')
-        for_node.add(f'init:{n.init}')
-        for_node.add(f'cond:{n.cond}')
-        for_node.add(f'iter:{n.iter}')
-        for_node.add(f'stmt:{n.stmt}')
+        if isinstance(n.init, VarAssignmentExpr):
+            for_node.add(f'init:{n.init.var} = {n.init.expr.value}')
+            
+        if isinstance(n.cond, BinaryOpExpr):
+            for_node.add(f'cond:{n.cond.left.ident} {n.cond.opr} {n.cond.right.value}')
         
-        n.for_init_stament.accept(self, for_node)
-        n.condition.accept(self, for_node)
-        n.step.accept(self, for_node)
-        n.body.accept(self, for_node)
-
+        if isinstance(n.iter, PostDec):
+            for_node.add(f'iter:{n.iter.op} {n.iter.expr.ident}')
+        if isinstance(n.iter, PostInc):
+            for_node.add(f'iter:{n.iter.op} {n.iter.expr.ident}')
+        if isinstance(n.iter, PreDec):
+            for_node.add(f'iter:{n.iter.op} {n.iter.expr.ident}')
+        if isinstance(n.iter, PreInc):
+            for_node.add(f'iter:{n.iter.op} {n.iter.expr.ident}')
+            
+        n.stmt.accept(self, for_node)
+    
     def visit(self, n: ReturnStmt, parent_tree: Tree):
         return_node = parent_tree.add('[bold blue]ReturnStmt[/bold blue]')
         if n.expr:
@@ -405,7 +412,6 @@ class RenderTreeVisitor(Visitor):
     def visit(self, n: UnaryOpExpr, parent_tree: Tree):
         unary_node = parent_tree.add(f'[bold magenta]UnaryOp[/bold magenta]')
         unary_node.add(f'opr: {n.opr}')
-        unary_node.add(f'expr: {n.expr}')
         n.expr.accept(self, unary_node)
         
     def visit(self, n: CallExpr, parent_tree: Tree):
@@ -414,7 +420,7 @@ class RenderTreeVisitor(Visitor):
         call_node.add(f'Args:')
         if n.args != None:
             for arg in n.args:
-                call_node.add(f'arg: {arg.ident}')
+                arg.accept(self, call_node)
             
     def visit(self, n: NewArrayExpr, parent_tree: Tree):
         array_node = parent_tree.add(f'[bold green]New Array[/bold green]') 
@@ -473,40 +479,48 @@ class RenderTreeVisitor(Visitor):
     def visit(self, n: PostDec, parent_tree: Tree):
         Operator_node = parent_tree.add(f'[bold yellow]OperatorPostfix[/bold yellow]')
         Operator_node.add(f'Op: {n.op}')
-        Operator_node.add(f'Expr: {n.expr}')
-        n.expr.accept(self, Operator_node)
+        if isinstance(n.expr, ConstExpr):
+            n.expr.accept(self, Operator_node)
+        if isinstance(n.expr, VarExpr):
+            n.expr.accept(self, Operator_node)
     
     def visit(self, n: PostInc, parent_tree: Tree):
         Operator_node = parent_tree.add(f'[bold yellow]OperatorPostfix[/bold yellow]')
         Operator_node.add(f'Op: {n.op}')
-        Operator_node.add(f'Expr: {n.expr}')
-        n.expr.accept(self, Operator_node)
+        if isinstance(n.expr, ConstExpr):
+            n.expr.accept(self, Operator_node)
+        if isinstance(n.expr, VarExpr):
+            n.expr.accept(self, Operator_node)
     
     def visit(self, n: PreDec, parent_tree: Tree):
         Operator_node = parent_tree.add(f'[bold yellow]OperatorPrefix[/bold yellow]')
         Operator_node.add(f'Op: {n.op}')
-        Operator_node.add(f'Expr: {n.expr}')
-        n.expr.accept(self, Operator_node)
+        if isinstance(n.expr, ConstExpr):
+            n.expr.accept(self, Operator_node)
+        if isinstance(n.expr, VarExpr):
+            n.expr.accept(self, Operator_node)
     
     def visit(self, n: PreInc, parent_tree: Tree):
         Operator_node = parent_tree.add(f'[bold yellow]OperatorPrefix[/bold yellow]')
         Operator_node.add(f'Op: {n.op}')
-        Operator_node.add(f'Expr: {n.expr}')
-        n.expr.accept(self, Operator_node)
+        if isinstance(n.expr, ConstExpr):
+            n.expr.accept(self, Operator_node)
+        if isinstance(n.expr, VarExpr):
+            n.expr.accept(self, Operator_node)
     
     def visit(self, n: OperatorAssign, parent_tree: Tree):
         Operator_node = parent_tree.add(f'[bold yellow]OperatorAssign[/bold yellow]')
         Operator_node.add(f'Op: {n.op}')
-        Operator_node.add(f'Expr0: {n.expr0}')
-        Operator_node.add(f'Expr1: {n.expr1}')
-        n.expr0.accept(self, Operator_node)
-        n.expr1.accept(self, Operator_node)
+        if isinstance(n.expr0, ConstExpr):
+            n.expr0.accept(self, Operator_node)
+        if isinstance(n.expr1, ConstExpr):
+            n.expr1.accept(self, Operator_node)
     
     def visit(self, n: PrintfStmt, parent_tree: Tree):
         Printf_node = parent_tree.add(f'[bold yellow]PrintfStmt[/bold yellow]')
         Printf_node.add(f'String: {n.string}')
         for arg in n.args:
-            print(f'Arg: {arg}')
+            arg.accept(self, Printf_node)
     
     def visit(self, n: ScanfStmt, parent_tree: Tree):
         Scanf_node = parent_tree.add(f'[bold yellow]ScanfStmt[/bold yellow]')
@@ -548,7 +562,7 @@ class RenderTreeVisitor(Visitor):
         Sprintf_node.add(f'Ident: {n.ident}')
         Sprintf_node.add(f'String: {n.string}')
         for arg in n.args:
-            Sprintf_node.add(f'Arg: {arg}')
+            arg.accept(self, Sprintf_node)
             
         
             

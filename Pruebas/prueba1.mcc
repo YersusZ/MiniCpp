@@ -13,9 +13,6 @@ class Hola{
 }; 
 */
 
-
-
-
 int main(){
 
 	int i;
@@ -31,9 +28,6 @@ int main(){
 	++ a;
 	a ++;
 	a --;
-
-
-	//float aola[];
 
 	for (i = 0; i < 10; i++){
 		a += 1;
