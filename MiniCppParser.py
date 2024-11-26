@@ -14,6 +14,8 @@ class Parser(sly.Parser):
     tokens = Lexer.tokens
 
     precedence = (
+        ('left', 'PLUSPLUS'), 
+        ('left', 'MINUSMINUS'),
         ('left', '.'),
         ('left', 'IF'),  
         ('left', 'ELSE'),  
@@ -168,9 +170,9 @@ class Parser(sly.Parser):
     def while_stmt(self, p):
         return WhileStmt(p.expr, p.stmt)
     
-    @_("FOR '(' expr ';' expr ';' expr ';' ')' stmt")
+    @_("FOR '(' expr ';' expr ';' expr ')' stmt")
     def for_stmt(self, p):
-        return ForStmt(p.expr, p.expr, p.expr, p.stmt)
+        return ForStmt(p.expr0, p.expr1, p.expr2, p.stmt)
 
     @_("IF '(' expr ')' stmt %prec IF")
     def if_stmt(self, p):
@@ -286,29 +288,29 @@ class Parser(sly.Parser):
     def arg_list(self, p):
         return [p.expr]
     
-    @_("expr PLUSPLUS ';'")
+    @_("expr PLUSPLUS")
     def expr(self, p):
         return PostInc(p[1], p.expr)
     
-    @_("expr MINUSMINUS ';'")
+    @_("expr MINUSMINUS")
     def expr(self, p):
         return PostDec(p[1], p.expr)
 
-    @_("PLUSPLUS expr ';'")
+    @_("PLUSPLUS expr")
     def expr(self, p):
         print(p[0], p.expr)
         return PreInc(p[0], p.expr)
     
-    @_("MINUSMINUS expr ';'")
+    @_("MINUSMINUS expr")
     def expr(self, p):
         return PreDec(p[0], p.expr)
     
-    @_("expr PLUSEQ expr ';'",
-       "expr MINUSEQ expr ';' ",
-       "expr MULEQ expr ';' ",
-       "expr DIVEQ expr ';' ")
+    @_("IDENT PLUSEQ expr ';'",
+       "IDENT MINUSEQ expr ';'",
+       "IDENT MULEQ expr ';'",
+       "IDENT DIVEQ expr ';'")
     def expr(self, p):
-        return OperatorAssign(p[1], p.expr0, p.expr1)
+        return OperatorAssign(p[1], p.IDENT, p.expr1)
     
     @_("PRINTF '(' STRING ')' ';' ") 
     def printf_stmt(self, p):
