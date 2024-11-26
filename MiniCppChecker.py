@@ -31,6 +31,22 @@ class SymbolTable:
                     raise CheckError("No se puede hacer referencia a una variable en su propia inicialización")
                 return e[name]
         raise CheckError(f"'{name}' no está definido")
+    
+    def lookup_func(self, name):
+        # Buscar una función en la tabla de símbolos.
+        for n, e in enumerate(self.env.maps):
+            if name in e:
+                if isinstance(e[name], FuncDeclStmt):
+                    return True
+        return False
+    
+    def lookup_class(self, name):
+        # Buscar una función en la tabla de símbolos.
+        for n, e in enumerate(self.env.maps):
+            if name in e:
+                if isinstance(e[name], ClassDeclStmt):
+                    return True
+        return False
 
     def get_symbol_table(self):
         print("Tabla de símbolos:\n")
@@ -62,6 +78,8 @@ class Checker(Visitor):
         3. Agregar n.params dentro de la TS
         4. Visitar n.body
         '''
+        if env.lookup_func(n.ident):
+            raise CheckError(f"Función '{n.ident}' ya definida")
         env.define(n.ident, n)
         env.push_scope()
         env.define('fun', True)
@@ -69,13 +87,27 @@ class Checker(Visitor):
             for p in n.params:
                 env.define(p.ident, p)
         n.stmts.accept(self, env)
+        if n._type != 'void':
+            if not isinstance(n.stmts.stmts[-1], ReturnStmt):
+                raise CheckError(f"Función '{n.ident}' no tiene un retorno")
+        if isinstance(n.stmts.stmts[-1], ReturnStmt):
+            return_type = 'void'
+            if isinstance(n.stmts.stmts[-1].expr, ConstExpr):
+                return_type = type(n.stmts.stmts[-1].expr.value).__name__
+            else:
+                return_type = n.stmts.stmts[-1].expr.type
+            if n._type != return_type:
+                raise CheckError(f"Tipo de retorno incorrecto: se esperaba '{n._type}' pero se obtuvo '{return_type}'")
+            
         env.pop_scope()
     
     def visit(self, n: ClassDeclStmt, env: SymbolTable):
+        if env.lookup_class(n.ident):
+            raise CheckError(f"Clase '{n.ident}' ya definida")
         env.define(n.ident, n)
         env.push_scope()
-        for decl in n.decls:
-            decl.accept(self, env)
+        for atribmethods in n.class_body:
+            atribmethods.accept(self, env)
         env.pop_scope()
 
     def visit(self, n: VarDeclStmt, env: SymbolTable):

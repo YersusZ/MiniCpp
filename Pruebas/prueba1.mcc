@@ -1,8 +1,15 @@
+class animal{
+	void perro(){
+		printf("woof");
+	}
+	void gato(){
+		printf("miau");
+	}
+};
+
+
 int main(){
 	int i;
-	for(i = 0; i<10; i++){
-		printf("Hola");
-	}
-	cast float (i);
-
+	float a;
+	return 0;
 }

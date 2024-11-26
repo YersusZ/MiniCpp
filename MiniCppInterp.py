@@ -169,10 +169,10 @@ class Interpreter(Visitor):
       sclass = None
       env = self.env
     methods = { }
-    for meth in node.methods:
-      methods[meth.name] = Function(meth, env)
-    cls = Class(node.name, sclass, methods)
-    self.env[node.name] = cls
+    for meth in node.class_body:
+      methods[meth.ident] = Function(meth, env)
+    cls = Class(node.ident, sclass, methods)
+    self.env[node.ident] = cls
 
   def visit(self, node: FuncDeclStmt):
     func = Function(node, self.env)
