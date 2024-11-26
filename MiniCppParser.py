@@ -18,7 +18,11 @@ class Parser(sly.Parser):
         ('left', 'MINUSMINUS'),
         ('left', '.'),
         ('left', 'IF'),  
-        ('left', 'ELSE'),  
+        ('left', 'ELSE'),
+        ('right', 'PLUSEQ'),
+        ('right', 'MINUSEQ'),
+        ('right', 'MULEQ'),
+        ('right', 'DIVEQ'),  
         ('right', '='),
         ('left', 'OR'),
         ('left', 'AND'),
@@ -298,19 +302,18 @@ class Parser(sly.Parser):
 
     @_("PLUSPLUS expr")
     def expr(self, p):
-        print(p[0], p.expr)
         return PreInc(p[0], p.expr)
     
     @_("MINUSMINUS expr")
     def expr(self, p):
         return PreDec(p[0], p.expr)
     
-    @_("IDENT PLUSEQ expr ';'",
-       "IDENT MINUSEQ expr ';'",
-       "IDENT MULEQ expr ';'",
-       "IDENT DIVEQ expr ';'")
+    @_("IDENT PLUSEQ expr",
+       "IDENT MINUSEQ expr",
+       "IDENT MULEQ expr",
+       "IDENT DIVEQ expr")
     def expr(self, p):
-        return OperatorAssign(p[1], p.IDENT, p.expr1)
+        return OperatorAssign(p[1], p.IDENT, p.expr)
     
     @_("PRINTF '(' STRING ')' ';' ") 
     def printf_stmt(self, p):

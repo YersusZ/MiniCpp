@@ -1,4 +1,4 @@
-
+/* 
 class Hola{
 	int a;
 	int hola;
@@ -10,14 +10,14 @@ class Hola{
 	void colibri(){
 		c = a;
 	}
-};
+}; 
+*/
 
 
 
 
 int main(){
 
-	/*
 	int i;
 	int a;
 	int b;
@@ -31,9 +31,10 @@ int main(){
 	++ a;
 	a ++;
 	a --;
-	
-	int Hola[];
-	*/
+
+
+	//float aola[];
+
 	for (i = 0; i < 10; i++){
 		a += 1;
 		b -= 1;
