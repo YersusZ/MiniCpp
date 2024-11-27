@@ -289,7 +289,14 @@ class Interpreter(Visitor):
 
     else:
       raise NotImplementedError(f"Mal operador {node.op}")
-
+    
+  def visit(self, node: ArrayDeclStmt):
+    self.env[node.ident] = {
+      'type': node._type,
+      'ident': node.ident,
+      'value': []
+    }
+    
   def visit(self, node: LogicalOpExpr):
     left = node.left.accept(self)
     if node.op == '||':

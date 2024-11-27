@@ -28,9 +28,11 @@ class SymbolTable:
         for n, e in enumerate(self.env.maps):
             if name in e:
                 if not e[name]:
-                    raise CheckError("No se puede hacer referencia a una variable en su propia inicialización")
+                    return False
                 return e[name]
-        raise CheckError(f"'{name}' no está definido")
+        if name == 'return':
+            return False
+        return False
     
     def lookup_func(self, name):
         # Buscar una función en la tabla de símbolos.
@@ -86,20 +88,23 @@ class Checker(Visitor):
         if n.params is not None:
             for p in n.params:
                 env.define(p.ident, p)
+        self.type_func = n._type
         n.stmts.accept(self, env)
-        if n._type != 'void':
-            if not isinstance(n.stmts.stmts[-1], ReturnStmt):
-                raise CheckError(f"Función '{n.ident}' no tiene un retorno")
-        if isinstance(n.stmts.stmts[-1], ReturnStmt):
-            return_type = 'void'
-            if isinstance(n.stmts.stmts[-1].expr, ConstExpr):
-                return_type = type(n.stmts.stmts[-1].expr.value).__name__
-            else:
-                return_type = n.stmts.stmts[-1].expr.type
-            if n._type != return_type:
-                raise CheckError(f"Tipo de retorno incorrecto: se esperaba '{n._type}' pero se obtuvo '{return_type}'")
-            
+        if not env.lookup('return') and self.type_func != 'void':
+            raise CheckError('Función sin retorno')
+        
+        if n._type == 'void' and env.lookup('return'):
+            raise CheckError('Función con retorno en tipo void')
         env.pop_scope()
+        
+    def visit(self, n: ReturnStmt, env: SymbolTable):
+        if env.lookup('fun') is None:
+            raise CheckError('return usado fuera de una función')
+        if self.type_func != 'void':
+            return_type = self.resolve_type(n.expr, env)
+            if self.type_func != return_type:
+                raise CheckError(f"Tipo de retorno incorrecto: se esperaba '{self.type_func}' pero se obtuvo '{return_type}'")
+    
     
     def visit(self, n: ClassDeclStmt, env: SymbolTable):
         if env.lookup_class(n.ident):
@@ -117,6 +122,8 @@ class Checker(Visitor):
         '''
         1. Agregar n.ident a la TS actual
         '''
+        if env.lookup(n.ident):
+            raise CheckError(f"Variable '{n.ident}' ya definida")
         env.define(n.ident, n)
 
     # Statements
@@ -126,12 +133,17 @@ class Checker(Visitor):
         1. Crear una tabla de simbolos
         2. Visitar Declaration/Statement
         '''
-        env.push_scope()
+        there_is_return = False
         for decl in n.decls:
             decl.accept(self, env)
         for stmt in n.stmts:
+            if isinstance(stmt, ReturnStmt):
+                there_is_return = True
             stmt.accept(self, env)
-        env.pop_scope()
+        if there_is_return:
+            env.define('return', True)
+        
+            
 
     def visit(self, n: IfStmt, env: SymbolTable):
         '''
@@ -190,15 +202,6 @@ class Checker(Visitor):
         if 'while' not in env.env and 'for' not in env.env:
             raise CheckError('continue usado fuera de un while/for')
 
-    def visit(self, n: ReturnStmt, env: SymbolTable):
-        '''
-        1. Si se ha definido n.expr, validar que sea del mismo tipo de la función
-        '''
-        if n.expr:
-            n.expr.accept(self, env)
-            if 'fun' not in env.env:
-                raise CheckError('return usado fuera de una funcion')
-
     def visit(self, n: ExprStmt, env: SymbolTable):
         n.expr.accept(self, env)
 
@@ -256,6 +259,11 @@ class Checker(Visitor):
         if var_type != expr_type:
             raise CheckError(f"Asignación de tipos incompatibles: {var_type} = {expr_type}")
         n.type = var_type
+        
+    def visit(self, n: ArrayDeclStmt, env: SymbolTable):
+        if env.lookup(n.ident):
+            raise CheckError(f"Variable '{n.ident}' ya definida")
+        env.define(n.ident, n)
 
     def visit(self, n: CastExpr, env: SymbolTable):
         n.expr.accept(self, env)

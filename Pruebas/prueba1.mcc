@@ -14,8 +14,9 @@ class animal : cacatua {
 	}
 };
 
-
 int main(){
+	
 	int i;
-	return 0;
+	printf("Hola");
+	return i;
 }
