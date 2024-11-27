@@ -22,7 +22,7 @@ class Lexer(sly.Lexer):
         'PLUSPLUS', 'MINUSMINUS', 'PLUSEQ', 'MINUSEQ', 'MULEQ', 'DIVEQ',
 
     }
-    literals = '+-*/%=().,;{}[]<>!'
+    literals = '+-*/%=().,;{}[]<>!:'
     
     # operadores de asignacion
     PLUSEQ = r'\+='

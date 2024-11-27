@@ -13,11 +13,13 @@ from MiniCppLex    import Lexer
 from MiniCppParser import Parser
 from collections   import ChainMap
 from MiniCppInterp import Interpreter
+from MiniCppChecker import Checker
 
 class Context:
     def __init__(self):
         self.lexer  = Lexer()
         self.parser = Parser()
+        self.checker = Checker()
         self.interprete = Interpreter(self)
         self.source = ''
         self.ast    = None

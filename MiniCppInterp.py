@@ -158,11 +158,12 @@ class Interpreter(Visitor):
   # Declarations
   def visit(self, node: Program):
     for stmt in node.decls:
-      stmt.accept(self)
+      self.env[stmt.ident] = stmt.accept(self)
       
   def visit(self, node: ClassDeclStmt):
     if node.sclass:
-      sclass = node.sclass.accept(self)
+      node.sclass = self.env[node.sclass]
+      node.sclass.accept(self)
       env = self.env.new_child()
       env['super'] = sclass
     else:

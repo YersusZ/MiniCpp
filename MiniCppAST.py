@@ -118,7 +118,7 @@ class FuncDeclStmt(Statement):
 @dataclass
 class ClassDeclStmt(Declaration):
     ident: str
-    sclass : str = None
+    sclass : Declaration = None
     class_body: List[Declaration] = field(default_factory=list)
 
 @dataclass

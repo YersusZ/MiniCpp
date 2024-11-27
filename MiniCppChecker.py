@@ -104,6 +104,9 @@ class Checker(Visitor):
     def visit(self, n: ClassDeclStmt, env: SymbolTable):
         if env.lookup_class(n.ident):
             raise CheckError(f"Clase '{n.ident}' ya definida")
+        if n.sclass != None:
+            if not env.lookup_class(n.sclass):
+                raise CheckError(f"Clase base '{n.sclass}' no definida")
         env.define(n.ident, n)
         env.push_scope()
         for atribmethods in n.class_body:
@@ -363,7 +366,7 @@ class Checker(Visitor):
         
     def raise_error(self, msg, node):
         raise CheckError(f"{msg} en la línea {node.line}")
-
+    
     def print_table(self, ast: Node):
         env = SymbolTable()
         self.visit(ast, env)

@@ -26,7 +26,6 @@ from rich.console import Console
 from MiniCppLex      import print_lexer
 from MiniCppAST   import RenderTreeVisitor
 from MiniCppContext   import Context
-from MiniCppChecker   import Checker
 
 import argparse
 
@@ -102,9 +101,7 @@ if __name__ == '__main__':
 
     elif args.sym:
       context.parse(source)
-      checker = Checker()
-      Render = RenderTreeVisitor()
-      checker.print_table(context.ast)
+      context.checker.print_table(context.ast)
     
     elif args.exec:
       context.parse(source)

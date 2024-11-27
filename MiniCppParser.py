@@ -49,13 +49,17 @@ class Parser(sly.Parser):
     def decl(self, p):
         return p[0]
     
-    @_("CLASS IDENT [ sclass ] '{' class_body '}' ';'")
+    @_("CLASS IDENT sclass_opt '{' class_body '}' ';'")
     def class_decl(self, p):
-        return ClassDeclStmt(p.IDENT, p.sclass,p.class_body)
+        return ClassDeclStmt(p.IDENT, p.sclass_opt, p.class_body)
     
-    @_("IDENT")
-    def sclass(self, p):
+    @_("empty")
+    def sclass_opt(self, p):
         return None
+    
+    @_("':' IDENT")
+    def sclass_opt(self, p):
+        return p.IDENT
 
     @_("class_member_list")
     def class_body(self, p):

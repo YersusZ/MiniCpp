@@ -1,4 +1,11 @@
-class animal{
+class cacatua{
+	void perro(){
+		printf("Hola soy un perro");
+	}
+};
+
+
+class animal : cacatua {
 	void perro(){
 		printf("woof");
 	}
@@ -10,6 +17,5 @@ class animal{
 
 int main(){
 	int i;
-	float a;
 	return 0;
 }
