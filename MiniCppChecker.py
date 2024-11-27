@@ -3,9 +3,17 @@ from typing import Union
 from MiniCppAST import *
 from MiniCpptypesys import *
 from tabulate import tabulate
+from rich.console import Console
+
+
 
 class CheckError(Exception):
-    pass
+    def __init__(self, message):
+        console = Console()
+        # Renderiza el mensaje con estilo (en rojo, negrita)
+        self.message = f"[bold red]{message}[/bold red]"
+        # Almacena el mensaje como texto sin formato para el sistema de excepciones
+        super().__init__(console.render_str(self.message))
 
 class SymbolTable:
     def __init__(self):
@@ -71,7 +79,11 @@ class Checker(Visitor):
         for decl in n.decls:
             decl.accept(self, env)
         if not env.lookup('main'):
-            raise CheckError("No se encontró la función 'main'")
+            try:
+                raise CheckError("No se encontró la función 'main'.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
 
     def visit(self, n: FuncDeclStmt, env: SymbolTable):
         '''
@@ -81,7 +93,11 @@ class Checker(Visitor):
         4. Visitar n.body
         '''
         if env.lookup_func(n.ident):
-            raise CheckError(f"Función '{n.ident}' ya definida")
+            try:
+                raise CheckError(f"Función '{n.ident}' ya definida.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         env.define(n.ident, n)
         env.push_scope()
         env.define('fun', True)
@@ -91,29 +107,53 @@ class Checker(Visitor):
         self.type_func = n._type
         n.stmts.accept(self, env)
         if not env.lookup('return') and self.type_func != 'void':
-            raise CheckError('Función sin retorno')
+            try:
+                raise CheckError("Función sin retorno.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         
         if n._type == 'void' and env.lookup('return'):
-            raise CheckError('Función con retorno en tipo void')
+            try:
+                raise CheckError('Función con retorno en tipo void.')
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         env.pop_scope()
         
     def visit(self, n: ReturnStmt, env: SymbolTable):
         if env.lookup('fun') is None:
-            raise CheckError('return usado fuera de una función')
+            try:
+                raise CheckError('return usado fuera de una función.')
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         if n.expr == 'True' or n.expr == 'False':
             n.expr = bool
         if self.type_func != 'void':
             return_type = self.resolve_type(n.expr, env)
             if self.type_func != return_type:
-                raise CheckError(f"Tipo de retorno incorrecto: se esperaba '{self.type_func}' pero se obtuvo '{return_type}'")
+                try:
+                    raise CheckError(f"Tipo de retorno incorrecto: se esperaba '{self.type_func}' pero se obtuvo '{return_type}'.")
+                except CheckError as err:
+                    console = Console()
+                    console.print(err.message)
     
     
     def visit(self, n: ClassDeclStmt, env: SymbolTable):
         if env.lookup_class(n.ident):
-            raise CheckError(f"Clase '{n.ident}' ya definida")
+            try:
+                raise CheckError(f"Clase '{n.ident}' ya definida.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         if n.sclass != None:
             if not env.lookup_class(n.sclass):
-                raise CheckError(f"Clase base '{n.sclass}' no definida")
+                try:
+                    raise CheckError(f"Clase base '{n.sclass}' no definida.")
+                except CheckError as err:
+                    console = Console()
+                    console.print(err.message)
         env.define(n.ident, n)
         env.push_scope()
         for atribmethods in n.class_body:
@@ -125,7 +165,11 @@ class Checker(Visitor):
         1. Agregar n.ident a la TS actual
         '''
         if env.lookup(n.ident):
-            raise CheckError(f"Variable '{n.ident}' ya definida")
+            try:
+                raise CheckError(f"Variable '{n.ident}' ya definida.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         env.define(n.ident, n)
 
     # Statements
@@ -155,11 +199,19 @@ class Checker(Visitor):
         '''
         if isinstance(n.expr, BinaryOpExpr):
             if (n.expr.opr != '<' and n.expr.opr != '>' and n.expr.opr != '<=' and n.expr.opr != '>=' and n.expr.opr != '=='):
-                raise CheckError('La condición del if debe ser una comparación')
+                try:
+                    raise CheckError('La condición del if debe ser una comparación.')
+                except CheckError as err:
+                    console = Console()
+                    console.print(err.message)
         else:
             typecond = self.resolve_type(n.expr, env)
             if typecond != 'bool':
-                raise CheckError('La condición del if debe ser una expresión booleana')
+                try:
+                    raise CheckError('La condición del if debe ser una expresión booleana.')
+                except CheckError as err:
+                    console = Console()
+                    console.print(err.message)
             
         n.expr.accept(self, env)
         n.then.accept(self, env)
@@ -174,11 +226,20 @@ class Checker(Visitor):
         '''
         if isinstance(n.expr, BinaryOpExpr):
             if (n.expr.opr != '<' and n.expr.opr != '>' and n.expr.opr != '<=' and n.expr.opr != '>=' and n.expr.opr != '=='):
-                raise CheckError('La condición del ciclo while debe ser una comparación')
+                try:
+                    raise CheckError('La condición del ciclo while debe ser una comparación.')
+                except CheckError as err:
+                    console = Console()
+                    console.print(err.message)
         else:
             typecond = self.resolve_type(n.expr, env)
             if typecond != 'bool': 
-                raise CheckError('La condición del ciclo while debe ser una expresión binaria')
+                try:
+                    raise CheckError('La condición del ciclo while debe ser una expresión binaria.')
+                except CheckError as err:
+                    console = Console()
+                    console.print(err.message)
+            
         env.define('while', True)
         n.expr.accept(self, env)
         n.stmt.accept(self, env)
@@ -189,16 +250,32 @@ class Checker(Visitor):
         1. Visitar n.init, n.cond, n.iter y n.stmt
         '''
         if not isinstance(n.init, (VarAssignmentExpr, VarDeclStmt)):
-            raise CheckError('La inicialización del ciclo for debe ser una asignación')
+            try:
+                raise CheckError('La inicialización del ciclo for debe ser una asignación.')
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         
         if isinstance(n.cond, BinaryOpExpr):
             if n.cond.opr != '<' and n.cond.opr != '>' and n.cond.opr != '<=' and n.cond.opr != '>=':
-                raise CheckError('La condición del ciclo for debe ser una comparación')  
+                try:
+                    raise CheckError('La condición del ciclo for debe ser una comparación.') 
+                except CheckError as err:
+                    console = Console()
+                    console.print(err.message)
         else:
-            raise CheckError('La condición del ciclo for debe ser una expresión binaria')
+            try:
+                raise CheckError('La condición del ciclo for debe ser una expresión binaria.')
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         
         if not isinstance(n.iter, (PostDec, PreDec, PostInc, PreInc)):
-            raise CheckError('Debe ser un incremento/decremento')
+            try:
+                raise CheckError('Debe ser un incremento/decremento.')
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         env.define('for', True)
         n.init.accept(self, env)
         n.cond.accept(self, env)
@@ -211,14 +288,22 @@ class Checker(Visitor):
         1. Verificar que esta dentro de un ciclo while/for
         '''
         if not env.lookup('while') and not env.lookup('for'):
-            raise CheckError('break usado fuera de un while/for')
+            try:
+                raise CheckError('break usado fuera de un while/for.')
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
 
     def visit(self, n: ContinueStmt, env: SymbolTable):
         '''
         1. Verificar que esta dentro de un ciclo while/for
         '''
         if not env.lookup('while') and not env.lookup('for'):
-            raise CheckError('continue usado fuera de un while/for')
+            try:
+                raise CheckError('continue usado fuera de un while/for.')
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
 
     def visit(self, n: ExprStmt, env: SymbolTable):
         n.expr.accept(self, env)
@@ -234,11 +319,19 @@ class Checker(Visitor):
         expr_type_left = self.resolve_type(n.left, env)
         expr_type_right = self.resolve_type(n.right, env)
         if expr_type_left != expr_type_right:
-            raise CheckError(f"tipos incompatibles: {n.left} {expr_type_left} = {expr_type_right} {n.right}")
+            try:
+                raise CheckError(f"tipos incompatibles: {n.left} {expr_type_left} = {expr_type_right} {n.right}.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         
         result_type = check_binary_op(n.opr, expr_type_left, expr_type_right)
         if result_type is None:
-            raise CheckError(f"Operación binaria no soportada: {n.opr} entre {expr_type_left} y {expr_type_right}")
+            try:
+                raise CheckError(f"Operación binaria no soportada: {n.opr} entre {expr_type_left} y {expr_type_right}.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         n.type = result_type
 
     def visit(self, n: UnaryOpExpr, env: SymbolTable):
@@ -246,13 +339,21 @@ class Checker(Visitor):
         expr_type = self.resolve_type(n.expr, env)
         result_type = check_unary_op(n.opr, expr_type)
         if result_type is None:
-            raise CheckError(f"Operación unaria no soportada: {n.opr} para {expr_type}")
+            try:
+                raise CheckError(f"Operación unaria no soportada: {n.opr} para {expr_type}.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         n.type = result_type
 
     def visit(self, n: VarExpr, env: SymbolTable):
         var = env.lookup(n.ident)
         if not var:
-            raise CheckError(f"Variable '{n.ident}' no definida")
+            try:
+                raise CheckError(f"Variable '{n.ident}' no definida.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         n.type = var._type if hasattr(var, '_type') else type(var).__name__
 
     def visit(self, n: VarAssignmentExpr, env: SymbolTable):
@@ -260,7 +361,11 @@ class Checker(Visitor):
         try:
             var = env.lookup(n.var)
         except CheckError as err:
-            raise CheckError(str(err))
+            try:
+                raise CheckError(str(err))
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         var_type = var._type if hasattr(var, '_type') else type(var).__name__
         expr_type = n.expr
         if isinstance(expr_type, ConstExpr):
@@ -274,22 +379,42 @@ class Checker(Visitor):
             expr_type = env.lookup(n.expr.ident)._type if hasattr(env.lookup(n.expr.ident), '_type') else type(env.lookup(n.expr.ident)).__name__
         
         if var_type != expr_type:
-            raise CheckError(f"Asignación de tipos incompatibles: {var_type} = {expr_type}")
+            try:
+                raise CheckError(f"Asignación de tipos incompatibles: {var_type} = {expr_type}.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         n.type = var_type
         
     def visit(self, n: ArrayDeclStmt, env: SymbolTable):
         if env.lookup(n.ident):
-            raise CheckError(f"Variable '{n.ident}' ya definida")
+            try:
+                raise CheckError(f"Variable '{n.ident}' ya definida.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         env.define(n.ident, n)
 
     def visit(self, n: CastExpr, env: SymbolTable):
         n.expr.accept(self, env)
         if not isinstance(n.expr, VarExpr):
-            raise CheckError(f"Cast no soportado: {n.expr}")
+            try:
+                raise CheckError(f"Cast no soportado: {n.expr}.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         if n.expr.type == n._type:
-            raise CheckError(f"Cast innecesario: {n.expr.type} a {n._type}")
+            try:
+                raise CheckError(f"Cast innecesario: {n.expr.type} a {n._type}.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         if n._type not in typenames:
-            raise CheckError(f"Tipo de cast no soportado: {n._type}")
+            try:
+                raise CheckError(f"Tipo de cast no soportado: {n._type}.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         n.type = n._type
         
     def visit(self, n: CallExpr, env: SymbolTable):
@@ -297,13 +422,19 @@ class Checker(Visitor):
         1. Verificar que la función llamada está definida
         2. Verificar los tipos de los argumentos
         '''
-        try:
-            func = env.lookup(n.ident)
-        except CheckError as err:
-            raise CheckError(str(err))
-        
+        func = env.lookup(n.ident)
+        if not func:
+            try:
+                raise CheckError(f"Función '{n.ident}' no definida.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         if not isinstance(func, FuncDeclStmt):
-            raise CheckError(f"{n.func} no es una función")
+            try:
+                raise CheckError(f"{n.ident} no es una función")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         
         if n.args is None:
             n.args = []
@@ -312,14 +443,22 @@ class Checker(Visitor):
             func.params = []
             
         if len(n.args) != len(func.params):
-            raise CheckError(f"Número incorrecto de argumentos para la función {n.func}")
+            try:
+                raise CheckError(f"Número incorrecto de argumentos para la función {n.ident}: se esperaban {len(func.params)} pero se obtuvieron {len(n.args)}")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         
         for arg, param in zip(n.args, func.params):
             arg.accept(self, env)
             arg_type = self.resolve_type(arg, env)
             param_type = param._type
             if arg_type != param_type:
-                raise CheckError(f"Tipo incorrecto para el argumento {arg}: se esperaba {param_type} pero se obtuvo {arg_type}")
+                try:
+                    raise CheckError(f"Tipo incorrecto para el argumento {arg}: se esperaba {param_type} pero se obtuvo {arg_type}")
+                except CheckError as err:
+                    console = Console()
+                    console.print(err.message)
         
         n.type = func._type
     
@@ -342,10 +481,18 @@ class Checker(Visitor):
         
     def visit(self, n: ArrayLoockupExpr, env: SymbolTable):
         if not env.lookup(n.ident):
-            raise CheckError(f"Variable '{n.ident}' no definida")
+            try:
+                raise CheckError(f"Variable '{n.ident}' no definida")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         n.expr.accept(self, env)
-        if self.resolve_type(n.index, env) != 'int':
-            raise CheckError(f"Índice de arreglo debe ser un entero")
+        if self.resolve_type(n.expr, env) != 'int':
+            try:
+                raise CheckError(f"Índice de arreglo debe ser un entero")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
         n.type = n.ident
 
     def visit(self, n: This, env: SymbolTable):
@@ -365,7 +512,11 @@ class Checker(Visitor):
     
     def visit(self, n: NewArrayExpr, env: SymbolTable):
         if n._type not in typenames:
-            raise CheckError(f"Tipo de arreglo no soportado: {n._type}")
+            try:
+                raise CheckError(f"Tipo de arreglo no soportado: {n._type}")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
     
     def visit(self, n: PostInc, env: SymbolTable):
         pass
@@ -401,9 +552,6 @@ class Checker(Visitor):
             return self.resolve_type(expr.expr, env)
         if isinstance(expr, CallExpr):
             return expr.type
-        
-    def raise_error(self, msg, node):
-        raise CheckError(f"{msg} en la línea {node.line}")
     
     def print_table(self, ast: Node):
         env = SymbolTable()

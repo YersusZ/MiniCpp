@@ -566,6 +566,11 @@ class RenderTreeVisitor(Visitor):
         for arg in n.args:
             arg.accept(self, Sprintf_node)
             
+    def visit(self, n: ArrayLoockupExpr, parent_tree: Tree):
+        ArrayLoockup_node = parent_tree.add(f'[bold yellow]ArrayLoockupExpr[/bold yellow]')
+        ArrayLoockup_node.add(f'Ident: {n.ident}')
+        n.expr.accept(self, ArrayLoockup_node)
+            
         
             
 # =====================================================================
