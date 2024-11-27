@@ -100,6 +100,8 @@ class Checker(Visitor):
     def visit(self, n: ReturnStmt, env: SymbolTable):
         if env.lookup('fun') is None:
             raise CheckError('return usado fuera de una función')
+        if n.expr == 'True' or n.expr == 'False':
+            n.expr = bool
         if self.type_func != 'void':
             return_type = self.resolve_type(n.expr, env)
             if self.type_func != return_type:
@@ -151,16 +153,32 @@ class Checker(Visitor):
         2. Visitar Statement por n.then
         3. Si existe opcion n.else_, visitar
         '''
+        if isinstance(n.expr, BinaryOpExpr):
+            if (n.expr.opr != '<' and n.expr.opr != '>' and n.expr.opr != '<=' and n.expr.opr != '>=' and n.expr.opr != '=='):
+                raise CheckError('La condición del if debe ser una comparación')
+        else:
+            typecond = self.resolve_type(n.expr, env)
+            if typecond != 'bool':
+                raise CheckError('La condición del if debe ser una expresión booleana')
+            
         n.expr.accept(self, env)
         n.then.accept(self, env)
         if n.else_:
             n.else_.accept(self, env)
+        
 
     def visit(self, n: WhileStmt, env: SymbolTable):
         '''
         1. Visitar n.expr (validar tipos)
         2. visitar n.stmt
         '''
+        if isinstance(n.expr, BinaryOpExpr):
+            if (n.expr.opr != '<' and n.expr.opr != '>' and n.expr.opr != '<=' and n.expr.opr != '>=' and n.expr.opr != '=='):
+                raise CheckError('La condición del ciclo while debe ser una comparación')
+        else:
+            typecond = self.resolve_type(n.expr, env)
+            if typecond != 'bool': 
+                raise CheckError('La condición del ciclo while debe ser una expresión binaria')
         env.define('while', True)
         n.expr.accept(self, env)
         n.stmt.accept(self, env)
@@ -170,7 +188,7 @@ class Checker(Visitor):
         '''
         1. Visitar n.init, n.cond, n.iter y n.stmt
         '''
-        if not isinstance(n.init, VarAssignmentExpr):
+        if not isinstance(n.init, (VarAssignmentExpr, VarDeclStmt)):
             raise CheckError('La inicialización del ciclo for debe ser una asignación')
         
         if isinstance(n.cond, BinaryOpExpr):
@@ -192,14 +210,14 @@ class Checker(Visitor):
         '''
         1. Verificar que esta dentro de un ciclo while/for
         '''
-        if 'while' not in env.env and 'for' not in env.env:
+        if not env.lookup('while') and not env.lookup('for'):
             raise CheckError('break usado fuera de un while/for')
 
     def visit(self, n: ContinueStmt, env: SymbolTable):
         '''
         1. Verificar que esta dentro de un ciclo while/for
         '''
-        if 'while' not in env.env and 'for' not in env.env:
+        if not env.lookup('while') and not env.lookup('for'):
             raise CheckError('continue usado fuera de un while/for')
 
     def visit(self, n: ExprStmt, env: SymbolTable):
@@ -232,10 +250,9 @@ class Checker(Visitor):
         n.type = result_type
 
     def visit(self, n: VarExpr, env: SymbolTable):
-        try:
-            var = env.lookup(n.ident)
-        except CheckError as err:
-            raise CheckError(str(err))
+        var = env.lookup(n.ident)
+        if not var:
+            raise CheckError(f"Variable '{n.ident}' no definida")
         n.type = var._type if hasattr(var, '_type') else type(var).__name__
 
     def visit(self, n: VarAssignmentExpr, env: SymbolTable):
@@ -322,6 +339,14 @@ class Checker(Visitor):
 
         if name is None:
             self.error(n, f"Checker error. Set symbol '{n.name}' is not defined")
+        
+    def visit(self, n: ArrayLoockupExpr, env: SymbolTable):
+        if not env.lookup(n.ident):
+            raise CheckError(f"Variable '{n.ident}' no definida")
+        n.expr.accept(self, env)
+        if self.resolve_type(n.index, env) != 'int':
+            raise CheckError(f"Índice de arreglo debe ser un entero")
+        n.type = n.ident
 
     def visit(self, n: This, env: SymbolTable):
         pass
@@ -339,7 +364,8 @@ class Checker(Visitor):
         pass
     
     def visit(self, n: NewArrayExpr, env: SymbolTable):
-        pass
+        if n._type not in typenames:
+            raise CheckError(f"Tipo de arreglo no soportado: {n._type}")
     
     def visit(self, n: PostInc, env: SymbolTable):
         pass
@@ -371,6 +397,10 @@ class Checker(Visitor):
             return expr._type
         if isinstance(expr, Grouping):
             return self.resolve_type(expr.expr, env)
+        if isinstance(expr, VarAssignmentExpr):
+            return self.resolve_type(expr.expr, env)
+        if isinstance(expr, CallExpr):
+            return expr.type
         
     def raise_error(self, msg, node):
         raise CheckError(f"{msg} en la línea {node.line}")

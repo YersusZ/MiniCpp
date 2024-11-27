@@ -12,11 +12,23 @@ class animal : cacatua {
 	void gato(){
 		printf("miau");
 	}
+	int Nombrarp(int nombre){
+		nombre = 100;
+		return nombre;
+	}
 };
 
 int main(){
-	
-	int i;
-	printf("Hola");
-	return i;
+	int z = 10;
+	while (z <= 10)
+	{
+		int c = 10;
+		for(int i = 10; i<10; i++){
+			printf("Hola");
+			break;
+		}
+		new int [10];
+		break;
+		return 0;
+	}
 }

@@ -17,7 +17,7 @@ class Parser(sly.Parser):
         ('left', 'PLUSPLUS'), 
         ('left', 'MINUSMINUS'),
         ('left', '.'),
-        ('left', 'IF'),  
+        ('right', 'IF'),  
         ('left', 'ELSE'),
         ('right', 'PLUSEQ'),
         ('right', 'MINUSEQ'),
@@ -81,9 +81,9 @@ class Parser(sly.Parser):
     def method_decl(self, p):
         return FuncDeclStmt(p.type_spec, p.IDENT, p.params, p.compound_stmt)
     
-    @_("type_spec IDENT ';'")
+    @_("type_spec IDENT [ '=' expr ] ';'")
     def var_decl(self, p):
-        return VarDeclStmt(p.type_spec, p.IDENT)
+        return VarDeclStmt(p.type_spec, p.IDENT, p.expr)
     
     @_("type_spec IDENT '[' ']' ';'")
     def var_decl(self, p):
@@ -115,7 +115,7 @@ class Parser(sly.Parser):
     
     @_("type_spec IDENT")
     def param(self, p):
-        return VarDeclStmt(p.type_spec, p.IDENT)
+        return VarDeclStmt(p.type_spec, p.IDENT, None)
 
     @_("type_spec IDENT '[' ']'")
     def param(self, p):
@@ -141,9 +141,9 @@ class Parser(sly.Parser):
     def local_decl_list(self, p):
         return [p.local_decl]
     
-    @_("type_spec IDENT ';'")
+    @_("type_spec IDENT [ '=' expr ] ';'")
     def local_decl(self, p):
-        return VarDeclStmt(p.type_spec, p.IDENT)
+        return VarDeclStmt(p.type_spec, p.IDENT, p.expr)
     
     @_("type_spec IDENT '[' ']' ';'")
     def local_decl(self, p):
@@ -185,6 +185,10 @@ class Parser(sly.Parser):
     @_("FOR '(' expr ';' expr ';' expr ')' stmt")
     def for_stmt(self, p):
         return ForStmt(p.expr0, p.expr1, p.expr2, p.stmt)
+    
+    @_("FOR '(' local_decl expr ';' expr ')' stmt")
+    def for_stmt(self, p):
+        return ForStmt(p.local_decl, p.expr0, p.expr1, p.stmt)
 
     @_("IF '(' expr ')' stmt %prec IF")
     def if_stmt(self, p):
