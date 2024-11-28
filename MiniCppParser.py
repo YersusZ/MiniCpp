@@ -178,25 +178,25 @@ class Parser(sly.Parser):
     def expr_stmt(self, p):
         return NullStmt()
     
-    @_("WHILE '(' expr ')' stmt")
+    @_("WHILE '(' expr ')' compound_stmt")
     def while_stmt(self, p):
-        return WhileStmt(p.expr, p.stmt)
+        return WhileStmt(p.expr, p.compound_stmt)
     
-    @_("FOR '(' expr ';' expr ';' expr ')' stmt")
+    @_("FOR '(' expr ';' expr ';' expr ')' compound_stmt")
     def for_stmt(self, p):
-        return ForStmt(p.expr0, p.expr1, p.expr2, p.stmt)
+        return ForStmt(p.expr0, p.expr1, p.expr2, p.compound_stmt)
     
-    @_("FOR '(' local_decl expr ';' expr ')' stmt")
+    @_("FOR '(' local_decl expr ';' expr ')' compound_stmt")
     def for_stmt(self, p):
-        return ForStmt(p.local_decl, p.expr0, p.expr1, p.stmt)
+        return ForStmt(p.local_decl, p.expr0, p.expr1, p.compound_stmt)
 
-    @_("IF '(' expr ')' stmt %prec IF")
+    @_("IF '(' expr ')' compound_stmt %prec IF")
     def if_stmt(self, p):
-        return IfStmt(p.expr, p.stmt, None)
+        return IfStmt(p.expr, p.compound_stmt, None)
 
-    @_("IF '(' expr ')' stmt ELSE stmt")
+    @_("IF '(' expr ')' compound_stmt ELSE compound_stmt")
     def if_stmt(self, p):
-        return IfStmt(p.expr, p.stmt0, p.stmt1)
+        return IfStmt(p.expr, p.compound_stmt0, p.compound_stmt1)
     
     @_("RETURN ';'")
     def return_stmt(self, p):

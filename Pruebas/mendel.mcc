@@ -16,7 +16,7 @@ bool in_mandelbrot(float x0, float y0, int n) {
   x = 0.0;
   y = 0.0;
   
-  while (n * 0) {
+  while (n < 0) {
     xtemp = x*x - y*y + x0;
     y = 2.0*x*y + y0;
     x = xtemp;

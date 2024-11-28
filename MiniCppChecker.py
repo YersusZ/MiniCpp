@@ -208,7 +208,7 @@ class Checker(Visitor):
         3. Si existe opcion n.else_, visitar
         '''
         if isinstance(n.expr, BinaryOpExpr):
-            if (n.expr.opr != '<' and n.expr.opr != '>' and n.expr.opr != '<=' and n.expr.opr != '>=' and n.expr.opr != '=='):
+            if (n.expr.opr != '<' and n.expr.opr != '>' and n.expr.opr != '<=' and n.expr.opr != '>=' and n.expr.opr != '==' and n.expr.opr != '!='):
                 try:
                     raise CheckError('La condición del if debe ser una comparación.')
                 except CheckError as err:
@@ -218,7 +218,7 @@ class Checker(Visitor):
             typecond = self.resolve_type(n.expr, env)
             if typecond != 'bool':
                 try:
-                    raise CheckError('La condición del if debe ser una expresión booleana.')
+                    raise CheckError(f'La condición del if debe ser una expresión booleana.')
                 except CheckError as err:
                     console = Console()
                     console.print(err.message)
@@ -236,7 +236,7 @@ class Checker(Visitor):
         2. visitar n.stmt
         '''
         if isinstance(n.expr, BinaryOpExpr):
-            if (n.expr.opr != '<' and n.expr.opr != '>' and n.expr.opr != '<=' and n.expr.opr != '>=' and n.expr.opr != '=='):
+            if (n.expr.opr != '<' and n.expr.opr != '>' and n.expr.opr != '<=' and n.expr.opr != '>=' and n.expr.opr != '==' and n.expr.opr != '!='):
                 try:
                     raise CheckError('La condición del ciclo while debe ser una comparación.')
                 except CheckError as err:
@@ -270,7 +270,7 @@ class Checker(Visitor):
                 console.print(err.message)
         
         if isinstance(n.cond, BinaryOpExpr):
-            if n.cond.opr != '<' and n.cond.opr != '>' and n.cond.opr != '<=' and n.cond.opr != '>=':
+            if n.cond.opr != '<' and n.cond.opr != '>' and n.cond.opr != '<=' and n.cond.opr != '>=' and n.cond.opr != '==' and n.cond.opr != '!=':
                 try:
                     raise CheckError('La condición del ciclo for debe ser una comparación.') 
                 except CheckError as err:
@@ -832,9 +832,12 @@ class Checker(Visitor):
         if isinstance(expr, VarAssignmentExpr):
             return self.resolve_type(expr.expr, env)
         if isinstance(expr, CallExpr):
-            return expr.type
+            func = env.lookup(expr.ident)
+            return func._type
         if isinstance(expr, LogicalOpExpr):
             return 'bool'
+        if isinstance(expr, UnaryOpExpr):
+            return self.resolve_type(expr.expr, env)
     
     def get_format_specifiers(self, string):
         specifiers = []

@@ -1,9 +1,20 @@
-void hola(){
-    int y; 
-    y = 5;
-}
+/* ******************************************************* *
+ *                                                         *
+ * HOLA MUNDO                                              *
+ *                                                         *
+ ***********************************************************
+ */
 
-int main() {
-    int x; 
-    x = 10;
-}
+ void main(void) {
+    // Imprimimos una cadena
+    int i;
+    float pi;
+
+    i = 10;
+    pi = 3.1415;
+
+    printf("Hola Clase");
+
+    // Salimos del programa, retornando 0=Ok
+    return 0;
+ }

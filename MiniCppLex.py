@@ -16,7 +16,7 @@ class Lexer(sly.Lexer):
         'ARRAYSIZE', 'AMPERSAND', 'CHAR',
 
         # Operadores de Relacion
-        'AND', 'OR', 'EQ', 'NE', 'GE', 'LE', 
+        'AND', 'OR', 'EQ', 'NE', 'GE', 'LE',
 
         # Otros Simbolos
         'IDENT', 'BOOL_LIT', 'INT_LIT', 'FLOAT_LIT', 'STRING',
