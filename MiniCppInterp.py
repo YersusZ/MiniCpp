@@ -152,19 +152,19 @@ class Interpreter(Visitor):
       Checker.check(node, self.check_env)
       if not self.ctxt.have_errors:
         node.accept(self)
+    except ReturnException as e:
+      print("\nReturn: ", e.value)
     except MiniCExit as e:
       pass
 
   # Declarations
   def visit(self, node: Program):
-    for stmt in node.decls:
-      self.check_env[stmt.ident] = stmt
-      stmt.accept(self)
-      
+    for decl in node.decls:
+      self.visit(decl)
       
   def visit(self, node: ClassDeclStmt):
     if node.sclass:
-      node.sclass = self.check_env[node.sclass]
+      node.sclass = self.env[node.sclass]
       sclass = node.sclass.accept(self)
       env = self.env.new_child()
       env['super'] = sclass
@@ -180,13 +180,16 @@ class Interpreter(Visitor):
   def visit(self, node: FuncDeclStmt):
     func = Function(node, self.env)
     self.env[node.ident] = func
+    node.stmts.accept(self)
+    print(self.env)
 
   def visit(self, node: VarDeclStmt):
     if node.expr:
-      expr = node.expr.accept(self)
+      expr = self.visit(node.expr)
     else:
       expr = None
     self.env[node.ident] = expr
+    print(self.env)
 
   # Statements
 
@@ -194,10 +197,21 @@ class Interpreter(Visitor):
     self.env = self.env.new_child()
     for stmt in node.stmts:
       stmt.accept(self)
+    for decl in node.decls:
+      decl.accept(self)
     self.env = self.env.parents
 
   def visit(self, node: PrintfStmt):
-    expr = node.expr.accept(self)
+    expr = node.string
+    for arg in node.args:
+      arg = self.visit(arg)
+      if isinstance(arg, int):
+        expr = expr.replace('%d', str(arg), 1)
+      elif isinstance(arg, str):
+        expr = expr.replace('%s', arg, 1)
+      else:
+        expr = expr.replace('%f', str(arg), 1)
+      
     if isinstance(expr, str):
       expr = expr.replace('\\n', '\n')
       expr = expr.replace('\\t', '\t')
@@ -313,18 +327,20 @@ class Interpreter(Visitor):
 
   def visit(self, node: VarAssignmentExpr):
     expr = node.expr.accept(self)
-    if node.op == '=':
-      self.env.maps[self.localmap[id(node)]][node.name] = expr
-    elif node.op == '+=':
-      self.env.maps[self.localmap[id(node)]][node.name] += expr
+    self.env.maps[self.localmap[id(node)]][node.var] = expr
+    
+  def visit(self, node: OperatorAssign):
+    expr = node.expr1.accept(self)
+    if node.op == '+=':
+      self.env.maps[self.localmap[id(node)]][node.expr0] += expr
     elif node.op == '-=':
-      self.env.maps[self.localmap[id(node)]][node.name] -= expr
+      self.env.maps[self.localmap[id(node)]][node.expr0] -= expr
     elif node.op == '*=':
-      self.env.maps[self.localmap[id(node)]][node.name] *= expr
+      self.env.maps[self.localmap[id(node)]][node.expr0] *= expr
     elif node.op == '/=':
-      self.env.maps[self.localmap[id(node)]][node.name] /= expr
+      self.env.maps[self.localmap[id(node)]][node.expr0] /= expr
     elif node.op == '%=':
-      self.env.maps[self.localmap[id(node)]][node.name] %= expr
+      self.env.maps[self.localmap[id(node)]][node.expr0] %= expr
 
   def visit(self, node: PreInc):
     self.env.maps[self.localmap[id(node)]][node.name] += 1
@@ -360,7 +376,10 @@ class Interpreter(Visitor):
       self.error(node.func, str(err))
 
   def visit(self, node: VarExpr):
-    return self.env.maps[self.localmap[id(node)]][node.name]
+      try:
+        return self.env.maps[self.localmap[id(node)]][node.ident]
+      except KeyError:
+          self.error(node, f"{self.env} no esta definido")
 
   def visit(self, node: Set):
     obj = node.obj.accept(self)

@@ -2,7 +2,9 @@ from collections import ChainMap  # Tabla de Simbolos
 from typing import Union
 from MiniCppAST import *
 from MiniCpptypesys import *
-from tabulate import tabulate
+from rich import print
+from rich.console import Console
+from rich.table   import Table
 from rich.console import Console
 
 
@@ -57,12 +59,15 @@ class SymbolTable:
         return False
 
     def get_symbol_table(self):
-        print("Tabla de símbolos:\n")
-        for i, scope in enumerate(self.env.maps):
-            table = [[k, type(v).__name__] for k, v in scope.items()]
-            print(tabulate(table, headers=["Variable", "Tipo"], tablefmt="grid"), "\n")
-        print()
-
+        table = Table(title='[bold blue] Tabla de Símbolos [/bold blue]')
+        table.add_column('Llave')
+        table.add_column('Valor')
+        
+        for key, value in self.env.items():
+            # Convert the value to a string to ensure it's renderable
+            table.add_row(str(key), str(value))  # Ensure both key and value are strings
+        return table
+        
 class Checker(Visitor):
 
     @classmethod
@@ -854,4 +859,5 @@ class Checker(Visitor):
     def print_table(self, ast: Node):
         env = SymbolTable()
         self.visit(ast, env)
-        print(env.get_symbol_table())
+        console = Console()
+        console.print(env.get_symbol_table())
