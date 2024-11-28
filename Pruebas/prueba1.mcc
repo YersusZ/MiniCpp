@@ -3,7 +3,25 @@ int hola(int a, int c){
 	return 0;
 }
 
+
 int main(){
-	a = 0;
+	int z;
+	float y;
+	int a[];
+	float b;
+	int x;
+	char perro;
+	super.a;
+	ArraySize(a);
+	++y;
+	--z;
+	y++;
+	z--;
+	printf("Hola");
 	return 0;
+	y += z;
+	if ((1 < x) && (b >= y)){
+		printf("Hola");
+	}
+	sprintf(perro, c, a);
 }

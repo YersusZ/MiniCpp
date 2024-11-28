@@ -13,6 +13,7 @@ class Lexer(sly.Lexer):
         # palabras reservadas
         'VOID', 'BOOL', 'INT', 'FLOAT', 'IF', 'ELSE', 'WHILE', 'RETURN', 'SPRINTF', 'INTTOFLOAT', 'CAST',
         'BREAK', 'CONTINUE', 'SIZE', 'NEW', 'CLASS', 'FOR', 'PRINTF', 'SCANF', 'SUPER', 'THIS', 'POINT',
+        'ARRAYSIZE', 'AMPERSAND', 'CHAR',
 
         # Operadores de Relacion
         'AND', 'OR', 'EQ', 'NE', 'GE', 'LE', 
@@ -36,9 +37,6 @@ class Lexer(sly.Lexer):
 
     # Ignorar patrones dentro del archivo fuente
     ignore = ' \t'
-    
-    #Otros operadores
-    POINT = r'\.'
 
     # Ignorar saltos de linea
     @_(r'\n+')
@@ -63,6 +61,10 @@ class Lexer(sly.Lexer):
     # Operadores Lógicos
     OR  = r'\|\|'
     AND = r'&&'
+    
+    #Otros operadores
+    POINT = r'\.'
+    AMPERSAND = r'&'
 
     # Definición de Tokens
     IDENT = r'[a-zA-Z_][a-zA-Z0-9_]*'
@@ -89,6 +91,9 @@ class Lexer(sly.Lexer):
     IDENT['sprintf']  = 'SPRINTF'
     IDENT['IntToFloat'] = 'INTTOFLOAT'
     IDENT['cast']     = 'CAST'
+    IDENT['super']    = 'SUPER'
+    IDENT['ArraySize'] = 'ARRAYSIZE'
+    IDENT['char'] = 'CHAR'
 
     @_(r'((0(?!\d))|([1-9]\d*))((\.\d+(e[-+]?\d+)?)|([eE][-+]?\d+))')
     def FLOAT_LIT(self, t):

@@ -255,7 +255,7 @@ class PostDec(Expression):
 @dataclass
 class OperatorAssign(Expression):
     op     : str
-    expr0  : Expression
+    expr0  : str
     expr1  : Expression
     
 @dataclass
@@ -450,7 +450,6 @@ class RenderTreeVisitor(Visitor):
     def visit(self, n: ArraySizeExpr, parent_tree: Tree):
         size_node = parent_tree.add(f'[bold yellow]ArraySizeExpr[/bold yellow]')
         size_node.add(f'Ident: {n.ident}')
-        n.ident.accept(self, size_node)
     
     def visit(self, n: SizeOfExpr, parent_tree: Tree):
         size_node = parent_tree.add(f'[bold yellow]SizeOfExpr[/bold yellow]')
@@ -570,8 +569,6 @@ class RenderTreeVisitor(Visitor):
         ArrayLoockup_node = parent_tree.add(f'[bold yellow]ArrayLoockupExpr[/bold yellow]')
         ArrayLoockup_node.add(f'Ident: {n.ident}')
         n.expr.accept(self, ArrayLoockup_node)
-            
-        
             
 # =====================================================================
 # Función para renderizar el AST

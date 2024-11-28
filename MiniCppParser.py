@@ -14,11 +14,11 @@ class Parser(sly.Parser):
     tokens = Lexer.tokens
 
     precedence = (
-        ('left', 'PLUSPLUS'), 
-        ('left', 'MINUSMINUS'),
-        ('left', '.'),
+        ('left', 'POINT'),
         ('right', 'IF'),  
         ('left', 'ELSE'),
+        ('left', 'PLUSPLUS'), 
+        ('left', 'MINUSMINUS'),
         ('right', 'PLUSEQ'),
         ('right', 'MINUSEQ'),
         ('right', 'MULEQ'),
@@ -89,7 +89,7 @@ class Parser(sly.Parser):
     def var_decl(self, p):
         return ArrayDeclStmt(p.type_spec, p.IDENT)
     
-    @_("VOID", "BOOL", "INT", "FLOAT")
+    @_("VOID", "BOOL", "INT", "FLOAT", "CHAR")
     def type_spec(self, p):
         return p[0]
     
@@ -172,7 +172,7 @@ class Parser(sly.Parser):
     
     @_("expr ';'")
     def expr_stmt(self, p):
-        return p.expr
+        return ExprStmt(p.expr)
 
     @_("';'")
     def expr_stmt(self, p):
@@ -226,14 +226,6 @@ class Parser(sly.Parser):
     def expr(self, p):
         return This()
     
-    @_("SUPER POINT IDENT")
-    def expr(self, p):
-        return Super(p.IDENT)
-    
-    @_("expr POINT IDENT")
-    def expr(self, p):
-        return Get(p.expr, p.IDENT)
-    
     @_("expr POINT IDENT '=' expr")
     def expr(self, p):
         return Set(p.expr0, p.IDENT, p.expr1)
@@ -279,14 +271,22 @@ class Parser(sly.Parser):
     @_("IDENT '(' args ')'")
     def expr(self, p):
         return CallExpr(p.IDENT, p.args)
-
-    @_("IDENT '.' SIZE")
+    
+    @_("SIZE '(' IDENT ')'")
     def expr(self, p):
         return SizeOfExpr(p.IDENT)
     
-    @_("INTTOFLOAT '(' IDENT ')'")
+    @_("SUPER POINT IDENT")
     def expr(self, p):
-        return IntToFloatExpr(p.IDENT)
+        return Super(p.IDENT)
+    
+    @_("expr POINT IDENT")
+    def expr(self, p):
+        return Get(p.expr, p.IDENT)
+    
+    @_("INTTOFLOAT '(' expr ')'")
+    def expr(self, p):
+        return IntToFloatExpr(p.expr)
     
     @_("CAST type_spec '(' expr ')'")
     def expr(self, p):
@@ -328,12 +328,12 @@ class Parser(sly.Parser):
     def expr(self, p):
         return PreDec(p[0], p.expr)
     
-    @_("IDENT PLUSEQ expr",
-       "IDENT MINUSEQ expr",
-       "IDENT MULEQ expr",
-       "IDENT DIVEQ expr")
+    @_("expr PLUSEQ expr",
+       "expr MINUSEQ expr",
+       "expr MULEQ expr",
+       "expr DIVEQ expr")
     def expr(self, p):
-        return OperatorAssign(p[1], p.IDENT, p.expr)
+        return OperatorAssign(p[1], p.expr0, p.expr1)
     
     @_("PRINTF '(' STRING ')' ';' ") 
     def printf_stmt(self, p):
@@ -343,13 +343,25 @@ class Parser(sly.Parser):
     def printf_stmt(self, p):
         return PrintfStmt(p.STRING, p.arg_list)
     
-    @_("SCANF '(' STRING ',' arg_list ')' ';' ")
+    @_("AMPERSAND expr")
+    def arg_listSCANF(self, p):
+        return [p.expr]
+    
+    @_("arg_listSCANF ',' AMPERSAND expr")
+    def arg_listSCANF(self, p):
+        return p.arg_listSCANF + [p.expr]
+    
+    @_("SCANF '(' STRING ',' arg_listSCANF ')' ';' ")
     def scanf_stmt(self, p):
-        return ScanfStmt(p.STRING, p.arg_list)
+        return ScanfStmt(p.STRING, p.arg_listSCANF)
     
     @_("SPRINTF '(' IDENT ',' STRING ',' arg_list ')' ';' ")
     def sprintf_stmt(self, p):
         return SprintfStmt(p.IDENT, p.STRING, p.arg_list)
+    
+    @_("ARRAYSIZE '(' IDENT ')'")
+    def expr(self, p):
+        return ArraySizeExpr(p.IDENT)
         
     @_("")
     def empty(self, p):

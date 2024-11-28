@@ -38,8 +38,6 @@ class SymbolTable:
                 if not e[name]:
                     return False
                 return e[name]
-        if name == 'return':
-            return False
         return False
     
     def lookup_func(self, name):
@@ -51,7 +49,7 @@ class SymbolTable:
         return False
     
     def lookup_class(self, name):
-        # Buscar una función en la tabla de símbolos.
+        # Buscar una clase en la tabla de símbolos.
         for n, e in enumerate(self.env.maps):
             if name in e:
                 if isinstance(e[name], ClassDeclStmt):
@@ -73,6 +71,8 @@ class Checker(Visitor):
         n.accept(checker,SymbolTable())
         return checker
 
+    #==================================================================================================================
+    
     def visit(self, n: Program, env: SymbolTable):
         env.define('scanf', True)
         env.define('printf', True)
@@ -84,6 +84,8 @@ class Checker(Visitor):
             except CheckError as err:
                 console = Console()
                 console.print(err.message)
+    
+    #==================================================================================================================
 
     def visit(self, n: FuncDeclStmt, env: SymbolTable):
         '''
@@ -120,6 +122,8 @@ class Checker(Visitor):
                 console = Console()
                 console.print(err.message)
         env.pop_scope()
+    
+    #==================================================================================================================
         
     def visit(self, n: ReturnStmt, env: SymbolTable):
         if env.lookup('fun') is None:
@@ -138,6 +142,8 @@ class Checker(Visitor):
                 except CheckError as err:
                     console = Console()
                     console.print(err.message)
+    
+    #==================================================================================================================
     
     
     def visit(self, n: ClassDeclStmt, env: SymbolTable):
@@ -159,6 +165,8 @@ class Checker(Visitor):
         for atribmethods in n.class_body:
             atribmethods.accept(self, env)
         env.pop_scope()
+    
+    #==================================================================================================================
 
     def visit(self, n: VarDeclStmt, env: SymbolTable):
         '''
@@ -171,6 +179,8 @@ class Checker(Visitor):
                 console = Console()
                 console.print(err.message)
         env.define(n.ident, n)
+
+    #==================================================================================================================
 
     # Statements
 
@@ -189,7 +199,7 @@ class Checker(Visitor):
         if there_is_return:
             env.define('return', True)
         
-            
+    #==================================================================================================================
 
     def visit(self, n: IfStmt, env: SymbolTable):
         '''
@@ -217,7 +227,8 @@ class Checker(Visitor):
         n.then.accept(self, env)
         if n.else_:
             n.else_.accept(self, env)
-        
+            
+    #==================================================================================================================        
 
     def visit(self, n: WhileStmt, env: SymbolTable):
         '''
@@ -244,6 +255,8 @@ class Checker(Visitor):
         n.expr.accept(self, env)
         n.stmt.accept(self, env)
         env.define('while', False)
+    
+    #==================================================================================================================
 
     def visit(self, n: ForStmt, env: SymbolTable):
         '''
@@ -282,6 +295,8 @@ class Checker(Visitor):
         n.iter.accept(self, env)
         n.stmt.accept(self, env)
         env.define('for', False)
+        
+    #==================================================================================================================
 
     def visit(self, n: BreakStmt, env: SymbolTable):
         '''
@@ -293,6 +308,8 @@ class Checker(Visitor):
             except CheckError as err:
                 console = Console()
                 console.print(err.message)
+            
+    #==================================================================================================================
 
     def visit(self, n: ContinueStmt, env: SymbolTable):
         '''
@@ -304,15 +321,21 @@ class Checker(Visitor):
             except CheckError as err:
                 console = Console()
                 console.print(err.message)
+    
+    #==================================================================================================================
 
+    #Expressions
+    
     def visit(self, n: ExprStmt, env: SymbolTable):
         n.expr.accept(self, env)
-
-    # Expressions
-
+        
+    #==================================================================================================================
+    
     def visit(self, n: ConstExpr, env: SymbolTable):
         pass
-
+    
+    #==================================================================================================================
+    
     def visit(self, n: BinaryOpExpr, env: SymbolTable):
         n.left.accept(self, env)
         n.right.accept(self, env)
@@ -333,7 +356,9 @@ class Checker(Visitor):
                 console = Console()
                 console.print(err.message)
         n.type = result_type
-
+        
+    #==================================================================================================================
+    
     def visit(self, n: UnaryOpExpr, env: SymbolTable):
         n.expr.accept(self, env)
         expr_type = self.resolve_type(n.expr, env)
@@ -345,6 +370,8 @@ class Checker(Visitor):
                 console = Console()
                 console.print(err.message)
         n.type = result_type
+    
+    #==================================================================================================================
 
     def visit(self, n: VarExpr, env: SymbolTable):
         var = env.lookup(n.ident)
@@ -355,28 +382,20 @@ class Checker(Visitor):
                 console = Console()
                 console.print(err.message)
         n.type = var._type if hasattr(var, '_type') else type(var).__name__
+    
+    #==================================================================================================================
 
     def visit(self, n: VarAssignmentExpr, env: SymbolTable):
         n.expr.accept(self, env)
-        try:
-            var = env.lookup(n.var)
-        except CheckError as err:
+        var = env.lookup(n.var)
+        if not var:
             try:
-                raise CheckError(str(err))
+                raise CheckError(f"Variable '{n.var}' no definida.")
             except CheckError as err:
                 console = Console()
                 console.print(err.message)
         var_type = var._type if hasattr(var, '_type') else type(var).__name__
-        expr_type = n.expr
-        if isinstance(expr_type, ConstExpr):
-            expr_type = type(n.expr.value).__name__
-        else:
-            expr_type = n.expr.type
-        
-        if isinstance(var, VarDeclStmt):
-            var_type = var._type
-        if isinstance(n.expr, VarExpr):
-            expr_type = env.lookup(n.expr.ident)._type if hasattr(env.lookup(n.expr.ident), '_type') else type(env.lookup(n.expr.ident)).__name__
+        expr_type = self.resolve_type(n.expr, env)
         
         if var_type != expr_type:
             try:
@@ -385,15 +404,45 @@ class Checker(Visitor):
                 console = Console()
                 console.print(err.message)
         n.type = var_type
+    
+    #==================================================================================================================
         
     def visit(self, n: ArrayDeclStmt, env: SymbolTable):
-        if env.lookup(n.ident):
+        array = env.lookup(n.ident)
+        if array:
             try:
                 raise CheckError(f"Variable '{n.ident}' ya definida.")
             except CheckError as err:
                 console = Console()
                 console.print(err.message)
         env.define(n.ident, n)
+    
+    #==================================================================================================================
+    
+    def visit(self, n: ArrayAssignmentExpr, env: SymbolTable):
+        n.expr.accept(self, env)
+        array = env.lookup(n.ident)
+        if not array:
+            try:
+                raise CheckError(f"Variable '{n.ident}' no definida.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+        if self.resolve_type(n.ndx, env) != 'int':
+            try:
+                raise CheckError(f"Índice de arreglo debe ser un entero.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+        if array._type != self.resolve_type(n.expr, env):
+            try:
+                raise CheckError(f"Tipo de arreglo incompatible: {array._type} = {self.resolve_type(n.expr, env)}.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+        n.type = array._type
+    
+    #==================================================================================================================
 
     def visit(self, n: CastExpr, env: SymbolTable):
         n.expr.accept(self, env)
@@ -416,6 +465,8 @@ class Checker(Visitor):
                 console = Console()
                 console.print(err.message)
         n.type = n._type
+    
+    #==================================================================================================================
         
     def visit(self, n: CallExpr, env: SymbolTable):
         '''
@@ -462,53 +513,175 @@ class Checker(Visitor):
         
         n.type = func._type
     
+    #==================================================================================================================
+    
     def visit(self, n: Grouping, env: SymbolTable):
         n.expr.accept(self, env)
         n.type = n.expr.type
+    
+    #==================================================================================================================
         
     def visit(self, n: Get, env: SymbolTable):
         self.visit(n.obj, env)
         Name = env.lookup(n.name)
-        if Name is None:
-            self.error(n, f"Checker error. Get symbol '{n.name}' is not defined")
-
+        if not Name:
+            try:
+                raise CheckError(f"El atributo '{n.name}' no esta definido.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+            
+    #==================================================================================================================
+    
     def visit(self, n: Set, env: SymbolTable):
         self.visit(n.obj, env)
-        name= env.lookup(n.name)
-
-        if name is None:
-            self.error(n, f"Checker error. Set symbol '{n.name}' is not defined")
+        Name = env.lookup(n.name)
+        if not Name:
+            try:
+                raise CheckError(f"El atributo '{n.name}' no esta definido.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+        n.expr.accept(self, env)
+            
+    #==================================================================================================================
         
     def visit(self, n: ArrayLoockupExpr, env: SymbolTable):
         if not env.lookup(n.ident):
             try:
-                raise CheckError(f"Variable '{n.ident}' no definida")
+                raise CheckError(f"Variable '{n.ident}' no definida.")
             except CheckError as err:
                 console = Console()
                 console.print(err.message)
         n.expr.accept(self, env)
         if self.resolve_type(n.expr, env) != 'int':
             try:
-                raise CheckError(f"Índice de arreglo debe ser un entero")
+                raise CheckError(f"Índice de arreglo debe ser un entero.")
             except CheckError as err:
                 console = Console()
                 console.print(err.message)
         n.type = n.ident
-
+    
+    #==================================================================================================================
+    
+    def visit(self, n: SizeOfExpr, env: SymbolTable):
+        size = env.lookup(n.ident)
+        if not size:
+            try:
+                raise CheckError(f"Variable '{n.ident}' no definida.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+        else:
+            size = self.resolve_type(size, env)
+            n.type = size
+            
+    #==================================================================================================================
+        
+    def visit(self, n: IntToFloatExpr, env: SymbolTable):
+        n.expr.accept(self, env)
+        if self.resolve_type(n.expr, env) != 'int':
+            try:
+                raise CheckError(f"IntToFloat solo acepta enteros.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+        n.type = 'float'
+        
+    #==================================================================================================================
+    
+    def visit(self, n: ArraySizeExpr, env: SymbolTable):
+        Array = env.lookup(n.ident)
+        if not Array:
+            try:
+                raise CheckError(f"Variable '{n.ident}' no definida.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+        if not isinstance(Array, ArrayDeclStmt):
+            try:
+                raise CheckError(f"Variable '{n.ident}' no es un arreglo.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+    
+    #==================================================================================================================
+                
+    def visit(self, n:ExprStmt, env: SymbolTable):
+        n.expr.accept(self, env)
+        
+    #==================================================================================================================
+        
     def visit(self, n: This, env: SymbolTable):
         pass
-
+    
+    #==================================================================================================================
+    
     def visit(self, n: Super, env: SymbolTable):
         pass
     
+    #==================================================================================================================
+    
     def visit(self, n: PrintfStmt, env: SymbolTable):
-        pass
+        if not isinstance(n.string, str):
+            try:
+                raise CheckError('La cadena de formato debe ser una cadena.')
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+        format_specifiers = self.get_format_specifiers(n.string)
+        if len(format_specifiers) != len(n.args):
+            try:
+                raise CheckError('Número incorrecto de argumentos para la función printf.')
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+                
+        for arg, specifier in zip(n.args, format_specifiers):
+            arg_type = self.resolve_type(arg, env)
+            if arg_type != specifier:
+                try:
+                    raise CheckError(f"Tipo incorrecto para el argumento {arg}: se esperaba {specifier} pero se obtuvo {arg_type}")
+                except CheckError as err:
+                    console = Console()
+                    console.print(err.message)
+                    
+        for arg in n.args:
+            arg.accept(self, env)
+    
+    #==================================================================================================================
     
     def visit(self, n: ScanfStmt, env: SymbolTable):
-        pass
-    
-    def visit(self, n: SprintfStmt, env: SymbolTable):
-        pass
+        if not isinstance(n.string, str):
+            try:
+                raise CheckError('La cadena de formato debe ser una cadena.')
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+                
+        format_specifiers = self.get_format_specifiers(n.string)
+        
+        if len(format_specifiers) != len(n.args):
+            try:
+                raise CheckError('Número incorrecto de argumentos para la función scanf.')
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+                
+        for arg, specifier in zip(n.args, format_specifiers):
+            arg_type = self.resolve_type(arg, env)
+            if arg_type != specifier:
+                try:
+                    raise CheckError(f"Tipo incorrecto para el argumento {arg}: se esperaba {specifier} pero se obtuvo {arg_type}")
+                except CheckError as err:
+                    console = Console()
+                    console.print(err.message)
+        
+        for arg in n.args:
+            arg.accept(self, env)
+        
+        
+    #==================================================================================================================
     
     def visit(self, n: NewArrayExpr, env: SymbolTable):
         if n._type not in typenames:
@@ -518,23 +691,131 @@ class Checker(Visitor):
                 console = Console()
                 console.print(err.message)
     
+    #==================================================================================================================
+    
     def visit(self, n: PostInc, env: SymbolTable):
-        pass
+        if not isinstance(n.expr, VarExpr):
+            try:
+                raise CheckError('Incremento solo acepta variables.')
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+        n.expr.accept(self, env)
+    
+    #==================================================================================================================
     
     def visit(self, n: PostDec, env: SymbolTable):
-        pass
+        if not isinstance(n.expr, VarExpr):
+            try:
+                raise CheckError('Decremento solo acepta variables.')
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+        n.expr.accept(self, env)
+        
+    #==================================================================================================================
     
     def visit(self, n: PreInc, env: SymbolTable):
-        pass
+        if not isinstance(n.expr, VarExpr):
+            try:
+                raise CheckError('Incremento solo acepta variables.')
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+        n.expr.accept(self, env)
+    
+    #==================================================================================================================
     
     def visit(self, n: PreDec, env: SymbolTable):
-        pass
+        if not isinstance(n.expr, VarExpr):
+            try:
+                raise CheckError('Decremento solo acepta variables.')
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+        n.expr.accept(self, env)
+        
+    #==================================================================================================================
     
     def visit(self, n: OperatorAssign, env: SymbolTable):
-        pass
-    
+        if not isinstance(n.expr0, VarExpr):
+            try:
+                raise CheckError('Operador de asignación solo acepta variables.')
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+        n.expr0.accept(self, env)
+        n.expr1.accept(self, env)
+        
+    #==================================================================================================================
+        
     def visit(self, n: NullStmt, env: SymbolTable):
         pass
+    
+    #==================================================================================================================
+    
+    def visit(self, n: LogicalOpExpr, env: SymbolTable):
+        n.left.accept(self, env)
+        n.right.accept(self, env)
+        if n.left.type != 'bool' or n.right.type != 'bool':
+            try:
+                raise CheckError(f"Operación lógica no soportada: {n.left.type} {n.opr} {n.right.type}.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+
+        if n.opr != '&&' and n.opr != '||':
+            try:
+                raise CheckError(f"Operador lógico no soportado: {n.opr}")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+        n.type = 'bool'
+
+    #==================================================================================================================
+    
+    def visit(self, n: SprintfStmt, env: SymbolTable):
+        char = env.lookup(n.ident)
+        if not char:
+            try:
+                raise CheckError(f"Variable '{n.ident}' no definida.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+                
+        if char._type != 'char':
+            try:
+                raise CheckError(f"Variable '{n.ident}' no es un char.")
+            except CheckError as err:
+                console = Console()
+                console.print(err.message) 
+                
+        if not isinstance(n.string, str):
+            try:
+                raise CheckError('La cadena de formato debe ser una cadena.')
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+        
+        if len(n.args) != len(self.get_format_specifiers(n.string)):
+            try:
+                raise CheckError('Número incorrecto de argumentos para la función sprintf.')
+            except CheckError as err:
+                console = Console()
+                console.print(err.message)
+        
+        format_specifiers = self.get_format_specifiers(n.string)
+        for arg, specifier in zip(n.args, format_specifiers):
+            arg_type = self.resolve_type(arg, env)
+            if arg_type != specifier:
+                try:
+                    raise CheckError(f"Tipo incorrecto para el argumento {arg}: se esperaba {specifier} pero se obtuvo {arg_type}")
+                except CheckError as err:
+                    console = Console()
+                    console.print(err.message)
+        
+    #==================================================================================================================
+    #Metodos auxiliares
 
     def resolve_type(self, expr, env):
         if isinstance(expr, BinaryOpExpr):
@@ -552,6 +833,20 @@ class Checker(Visitor):
             return self.resolve_type(expr.expr, env)
         if isinstance(expr, CallExpr):
             return expr.type
+        if isinstance(expr, LogicalOpExpr):
+            return 'bool'
+    
+    def get_format_specifiers(self, string):
+        specifiers = []
+        String = list(string)
+        for i in range(len(String)):
+            if String[i] == '%' and String[i+1] == 'd':
+                specifiers.append('int')
+            if String[i] == '%' and String[i+1] == 'f':
+                specifiers.append('float')
+            if String[i] == '%' and String[i+1] == 's':
+                specifiers.append('str')
+        return specifiers
     
     def print_table(self, ast: Node):
         env = SymbolTable()

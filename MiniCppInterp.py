@@ -290,13 +290,6 @@ class Interpreter(Visitor):
     else:
       raise NotImplementedError(f"Mal operador {node.op}")
     
-  def visit(self, node: ArrayDeclStmt):
-    self.env[node.ident] = {
-      'type': node._type,
-      'ident': node.ident,
-      'value': []
-    }
-    
   def visit(self, node: LogicalOpExpr):
     left = node.left.accept(self)
     if node.op == '||':
@@ -399,3 +392,19 @@ class Interpreter(Visitor):
     if not method:
       self.error(node.object, f'Propiedad indefinida {node.name!r}')
     return method.bind(this)
+  
+#======================================================================================
+  
+  def visit(self, node: ArrayDeclStmt):
+    self.env[node.ident] = {
+      'type': node._type,
+      'ident': node.ident,
+      'value': []
+    }
+  
+  def visit(self, node: ArrayAssignmentExpr):
+    array = self.env[node.ident]
+    index = node.expr0.accept(self)
+    value = node.expr1.accept(self)
+    array['value'][index] = value
+    return value
