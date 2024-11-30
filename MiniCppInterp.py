@@ -221,6 +221,8 @@ class Interpreter(Visitor):
       arg = arg.accept(self)
       if arg is None:
         error = True
+      if arg == int(arg):
+        arg = int(arg)
       if isinstance(arg, int):
         expr = expr.replace('%d', str(arg), 1)
       elif isinstance(arg, str):
@@ -394,29 +396,40 @@ class Interpreter(Visitor):
   def visit(self, node: OperatorAssign):
     expr = node.expr1.accept(self)
     if node.op == '+=':
-      self.env.maps[self.localmap[id(node)]][node.expr] += expr
+      if id(node) not in self.localmap:
+        self.localmap[id(node)] = len(self.env.maps) - 2
+      self.env.maps[self.localmap[id(node)]][node.expr0.ident] += expr
+      return self.env.maps[self.localmap[id(node)]][node.expr0.ident]
     elif node.op == '-=':
-      self.env.maps[self.localmap[id(node)]][node.expr] -= expr
+      if id(node) not in self.localmap:
+        self.localmap[id(node)] = len(self.env.maps) - 2
+      self.env.maps[self.localmap[id(node)]][node.expr0.ident] -= expr
+      return self.env.maps[self.localmap[id(node)]][node.expr0.ident]
     elif node.op == '*=':
-      self.env.maps[self.localmap[id(node)]][node.expr] *= expr
+      if id(node) not in self.localmap:
+        self.localmap[id(node)] = len(self.env.maps) - 2
+      self.env.maps[self.localmap[id(node)]][node.expr0.ident] *= expr
+      return self.env.maps[self.localmap[id(node)]][node.expr0.ident]
     elif node.op == '/=':
-      self.env.maps[self.localmap[id(node)]][node.expr] /= expr
-    elif node.op == '%=':
-      self.env.maps[self.localmap[id(node)]][node.expr] %= expr
+      if id(node) not in self.localmap:
+        self.localmap[id(node)] = len(self.env.maps) - 2
+      self.env.maps[self.localmap[id(node)]][node.expr0.ident] /= expr
+      return self.env.maps[self.localmap[id(node)]][node.expr0.ident]
 
   
   def visit(self, node: PreInc):
     if id(node) not in self.localmap:
-        self.localmap[id(node)] = len(self.env.maps) - 2
-    self.env.maps[self.localmap[id(node)]][node.ident] += 1
-    return self.env.maps[self.localmap[id(node)]][node.expr]
-
+     self.localmap[id(node)] = len(self.env.maps) - 2
+    self.env.maps[self.localmap[id(node)]][node.expr.ident] += 1
+    node.expr.accept(self)
+    return self.env.maps[self.localmap[id(node)]][node.expr.ident]
   
   def visit(self, node: PreDec):
     if id(node) not in self.localmap:
-        self.localmap[id(node)] = len(self.env.maps) - 2
-    self.env.maps[self.localmap[id(node)]][node.expr] -= 1
-    return self.env.maps[self.localmap[id(node)]][node.expr]
+     self.localmap[id(node)] = len(self.env.maps) - 2
+    self.env.maps[self.localmap[id(node)]][node.expr.ident] -= 1
+    node.expr.accept(self)
+    return self.env.maps[self.localmap[id(node)]][node.expr.ident]
 
   
   def visit(self, node: PostInc):
@@ -429,10 +442,10 @@ class Interpreter(Visitor):
   
   def visit(self, node: PostDec):
     if id(node) not in self.localmap:
-        self.localmap[id(node)] = len(self.env.maps) - 2
-    self.env.maps[self.localmap[id(node)]][node.expr] -= 1
-    return self.env.maps[self.localmap[id(node)]][node.expr]
-
+     self.localmap[id(node)] = len(self.env.maps) - 2
+    self.env.maps[self.localmap[id(node)]][node.expr.ident] -= 1
+    node.expr.accept(self)
+    return self.env.maps[self.localmap[id(node)]][node.expr.ident]
   
   def visit(self, node: CallExpr):
     callee = self.env[node.ident]
