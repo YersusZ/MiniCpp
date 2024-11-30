@@ -84,6 +84,12 @@ class Declaration(Node):
 # =====================================================================
 
 @dataclass
+class CompoundStmt(Statement):
+    decls: List[Declaration] = field(default_factory=list)
+    stmts: List[Statement] = field(default_factory=list)
+
+
+@dataclass
 class Program(Expression):
     decls : List[Declaration] = field(default_factory=list)
     
@@ -93,20 +99,15 @@ class NullStmt(Statement):
 
 @dataclass
 class ForStmt(Statement):
-    init: Statement
+    init: Expression
     cond: Expression
-    iter: Statement
-    stmt: Statement
+    iter: Expression
+    stmt: CompoundStmt
 
 @dataclass
 class CastExpr(Expression):
     _type: str
     expr: Expression
-    
-@dataclass
-class CompoundStmt(Statement):
-    decls: List[Declaration] = field(default_factory=list)
-    stmts: List[Statement] = field(default_factory=list)
 
 @dataclass
 class FuncDeclStmt(Statement):
@@ -143,13 +144,13 @@ class ArrayDeclStmt(Statement):
 @dataclass
 class WhileStmt(Statement):
     expr : Expression
-    stmt : Statement
+    stmt : CompoundStmt
 
 @dataclass
 class IfStmt(Statement):
     expr : Expression
-    then : Statement
-    else_: Statement = None
+    then : CompoundStmt
+    else_: CompoundStmt = None
 
 @dataclass
 class ReturnStmt(Statement):

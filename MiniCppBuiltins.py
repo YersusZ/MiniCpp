@@ -342,6 +342,7 @@ consts = {
   'PHI':   1.61803398874989484820,  # golden ratio
   'True' : True,
   'False': False,
+  'printf' : True,
 }
 
 builtins = {

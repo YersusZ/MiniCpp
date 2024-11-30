@@ -49,7 +49,7 @@ class Function:
     return len(self.node.params)
 
   def __call__(self, interp, *args):
-    newenv = self.env
+    newenv = self.env.new_child()
     for name, arg in zip(self.node.params, args):
       if isinstance(name, VarDeclStmt):
         newenv[name.ident] = arg
@@ -72,8 +72,7 @@ class Function:
   
   def is_main(self) -> bool:
     return self.node.ident == "main" and self.arity == 0
-
-
+  
 class Class:
 
   def __init__(self, name, sclass, methods):
@@ -126,13 +125,13 @@ class Interpreter(Visitor):
     self.env       = ChainMap()
     self.check_env = ChainMap()
     self.localmap  = { }
-
+    
   def _check_numeric_operands(self, node, left, right):
-    if isinstance(left, (int, float)) and isinstance(right, (int, float)) or left is None or right is None:
+    if isinstance(left, (int, float)) and isinstance(right, (int, float)):
       return True
     else:
       self.error(node, f"En '{node.opr}' los operandos deben ser numeros")
-
+      
   def _check_numeric_operand(self, node, value):
     if isinstance(value, (int, float)):
       return True
@@ -144,6 +143,7 @@ class Interpreter(Visitor):
     raise MiniCExit()
 
   # Punto de entrada alto-nivel
+  
   def interpret(self, node):
 
     for name, cval in consts.items():
@@ -170,10 +170,10 @@ class Interpreter(Visitor):
       raise MiniCExit()
 
   # Declarations
+  
   def visit(self, node: Program):
     for decl in node.decls:
       decl.accept(self)
-      
       
   def visit(self, node: ClassDeclStmt):
     if node.sclass:
@@ -195,31 +195,25 @@ class Interpreter(Visitor):
     self.env[node.ident] = func
 
   def visit(self, node: VarDeclStmt):
-    if node.expr:
-        expr = node.expr.accept(self)
-    else:
-        expr = None
-      
+    expr = node.expr.accept(self) if node.expr else None
+
     if id(node) not in self.localmap:
-      self.localmap[id(node)] = len(self.env.maps) - 1
-    self.env[node.ident] = expr
+        # Registrar la variable en el entorno global
+        self.localmap[id(node)] = len(self.env.maps) - 2
+
+    self.env.maps[self.localmap[id(node)]][node.ident] = expr
 
 
   # Statements
-
   def visit(self, node: CompoundStmt):
-    if self.env.get('incycle') is False or None or self.env.get('ifstmt') is False or None:
-        self.env = self.env.new_child()
-    
+    self.env = self.env.new_child()
     for decl in node.decls:
       decl.accept(self)
-    
     for stmt in node.stmts:
       stmt.accept(self)
-    
-    if self.env.get('incycle') is False or None or self.env.get('ifstmt') is False or None:
-        self.env = self.env.parents
-
+    self.env = self.env.parents
+      
+  
   def visit(self, node: PrintfStmt):
     error = False
     expr = node.string
@@ -242,6 +236,7 @@ class Interpreter(Visitor):
     if not error:
       print(expr, end='')
 
+  
   def visit(self, node: WhileStmt):
     self.env['incycle'] = True
     while _is_truthy(node.expr.accept(self)):
@@ -253,6 +248,7 @@ class Interpreter(Visitor):
         continue
     self.env['incycle'] = False
 
+  
   def visit(self, node: IfStmt):
     self.env['ifstmt'] = True
     expr = node.expr.accept(self)
@@ -262,22 +258,28 @@ class Interpreter(Visitor):
       node.else_.accept(self)
     self.env['ifstmt'] = False
 
+  
   def visit(self, node: BreakStmt):
     raise BreakException()
 
+  
   def visit(self, node: ContinueStmt):
     raise ContinueException()
 
+  
   def visit(self, node: ReturnStmt):
     # Ojo: node.expr es opcional
     value = 0 if not node.expr else node.expr.accept(self)
     raise ReturnException(value)
 
+  
   def visit(self, node: ExprStmt):
     node.expr.accept(self)
     
+  
   def visit(self, node: NullStmt):
     pass
+  
   
   def visit(self, node: ForStmt):
     self.env['incycle'] = True
@@ -294,15 +296,14 @@ class Interpreter(Visitor):
     self.env['incycle'] = False
     
   # Expressions
+  
   def visit(self, node: ConstExpr):
     return node.value
 
+  
   def visit(self, node: BinaryOpExpr):
     left  = node.left.accept(self)
     right = node.right.accept(self)
-    if left is None or right is None:
-      return None
-
     if node.opr == '+':
       (isinstance(left, str) and isinstance(right, str)) or self._check_numeric_operands(node, left, right)
       return left + right
@@ -349,8 +350,9 @@ class Interpreter(Visitor):
       return left >= right
 
     else:
-      raise NotImplementedError(f"Mal operador {node.op}")
+      raise KeyError(f"Operador desconocido {node.opr}")
     
+  
   def visit(self, node: LogicalOpExpr):
     left = node.left.accept(self)
     if node.op == '||':
@@ -359,6 +361,7 @@ class Interpreter(Visitor):
       return node.right.accept(self) if _is_truthy(left) else left
     raise NotImplementedError(f"Mal operador {node.op}")
 
+  
   def visit(self, node: UnaryOpExpr):
     expr = node.expr.accept(self)
     if node.opr == "-":
@@ -369,17 +372,25 @@ class Interpreter(Visitor):
     else:
       raise NotImplementedError(f"Mal operador {node.op}")
 
+  
   def visit(self, node: Grouping):
     return node.expr.accept(self)
 
+  
   def visit(self, node: VarAssignmentExpr):
     expr = node.expr.accept(self)
-    if id(node) not in self.localmap:
-      self.localmap[id(node)] = len(self.env.maps) - 1
-    self.env.maps[self.localmap[id(node)]][node.var] = expr
-    return expr
+    variable_name = node.var
+
+    # Buscar la variable en los entornos existentes
+    for scope in self.env.maps:
+        if variable_name in scope:
+            scope[variable_name] = expr
+            break
+    else:
+        # Si no se encuentra, asignar en el entorno global
+        self.env.maps[-1][variable_name] = expr
     
-    
+  
   def visit(self, node: OperatorAssign):
     expr = node.expr1.accept(self)
     if node.op == '+=':
@@ -393,32 +404,36 @@ class Interpreter(Visitor):
     elif node.op == '%=':
       self.env.maps[self.localmap[id(node)]][node.expr] %= expr
 
+  
   def visit(self, node: PreInc):
     if id(node) not in self.localmap:
-        self.localmap[id(node)] = len(self.env.maps) - 1
+        self.localmap[id(node)] = len(self.env.maps) - 2
     self.env.maps[self.localmap[id(node)]][node.ident] += 1
     return self.env.maps[self.localmap[id(node)]][node.expr]
 
+  
   def visit(self, node: PreDec):
     if id(node) not in self.localmap:
-        self.localmap[id(node)] = len(self.env.maps) - 1
+        self.localmap[id(node)] = len(self.env.maps) - 2
     self.env.maps[self.localmap[id(node)]][node.expr] -= 1
     return self.env.maps[self.localmap[id(node)]][node.expr]
 
+  
   def visit(self, node: PostInc):
     if id(node) not in self.localmap:
-     self.localmap[id(node)] = len(self.env.maps) -1 
+     self.localmap[id(node)] = len(self.env.maps) - 2
     self.env.maps[self.localmap[id(node)]][node.expr.ident] += 1
-    print(self.env)
-    print(self.localmap)
+    node.expr.accept(self)
     return self.env.maps[self.localmap[id(node)]][node.expr.ident]
 
+  
   def visit(self, node: PostDec):
     if id(node) not in self.localmap:
-        self.localmap[id(node)] = len(self.env.maps) - 1
+        self.localmap[id(node)] = len(self.env.maps) - 2
     self.env.maps[self.localmap[id(node)]][node.expr] -= 1
     return self.env.maps[self.localmap[id(node)]][node.expr]
 
+  
   def visit(self, node: CallExpr):
     callee = self.env[node.ident]
     if not callable(callee):
@@ -434,11 +449,18 @@ class Interpreter(Visitor):
     except CallError as err:
       self.error(node.ident, str(err))
 
+  
   def visit(self, node: VarExpr):
     if id(node) not in self.localmap:
-      self.localmap[id(node)] = len(self.env.maps) - 1
-    return self.env.maps[self.localmap[id(node)]][node.ident]
+        self.localmap[id(node)] = len(self.env.maps) - 2
 
+    # Buscar la variable en el entorno asignado y sus padres
+    for env in self.env.maps[self.localmap[id(node)]:]:
+        if node.ident in env:
+            valor = env[node.ident]
+            return valor
+  
+  '''
   def visit(self, node: Set):
     obj = node.obj.accept(self)
     val = node.value.accept(self)
@@ -448,6 +470,7 @@ class Interpreter(Visitor):
     else:
       self.error(node.obj, f'{self.ctxt.find_source(node.obj)!r} no es una instancia')
 
+  
   def visit(self, node: Get):
     obj = node.obj.accept(self)
     if isinstance(obj, Instance):
@@ -458,30 +481,25 @@ class Interpreter(Visitor):
     else:
       self.error(node.obj, f'{self.ctxt.find_source(node.obj)!r} no es una instancia')
 
+  
   def visit(self, node: This):
+    if id(node) not in self.localmap:
+      self.localmap[id(node)] = len(self.env.maps) - 2
     return self.env.maps[self.localmap[id(node)]]['this']
 
+  
   def visit(self, node: Super):
+    if id(node) not in self.localmap:
+      self.localmap[id(node)] = len(self.env.maps) - 2
     distance = self.localmap[id(node)]
+    if 'super' not in self.env.maps[distance]:
+        self.error(node, f'No se encontró "super" en el entorno')
     sclass = self.env.maps[distance]['super']
     this = self.env.maps[distance-1]['this']
     method = sclass.find_method(node.name)
     if not method:
       self.error(node.object, f'Propiedad indefinida {node.name!r}')
-    return method.bind(this)
+    return method.bind(this)'''
   
+
 #======================================================================================
-  
-  def visit(self, node: ArrayDeclStmt):
-    self.env[node.ident] = {
-      'type': node._type,
-      'ident': node.ident,
-      'value': []
-    }
-  
-  def visit(self, node: ArrayAssignmentExpr):
-    array = self.env[node.ident]
-    index = node.expr0.accept(self)
-    value = node.expr1.accept(self)
-    array['value'][index] = value
-    return value

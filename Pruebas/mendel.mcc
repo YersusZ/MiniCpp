@@ -9,6 +9,8 @@ float width;
 float height;
 int threshold;
 
+
+
 bool in_mandelbrot(float x0, float y0, int n) {
   float x = 0.0;
   float y = 0.0;
