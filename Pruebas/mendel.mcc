@@ -1,27 +1,25 @@
-// Draw a nice Mandelbrot set!
 
+
+// Variables globales
 float xmin;
 float xmax;
 float ymin;
 float ymax;
 float width;
 float height;
-int threshhold;
+int threshold;
 
 bool in_mandelbrot(float x0, float y0, int n) {
-  float x;
-  float y;
+  float x = 0.0;
+  float y = 0.0;
   float xtemp;
-  
-  x = 0.0;
-  y = 0.0;
-  
-  while (n < 0) {
-    xtemp = x*x - y*y + x0;
-    y = 2.0*x*y + y0;
+
+  while (n > 0) {
+    xtemp = x * x - y * y + x0;
+    y = 2.0 * x * y + y0;
     x = xtemp;
     n = n - 1;
-    if (x*x + y*y > 4.0) {
+    if (x * x + y * y > 4.0) {
       return False;
     }
   }
@@ -29,23 +27,14 @@ bool in_mandelbrot(float x0, float y0, int n) {
 }
 
 void mandel() {
-  float dx;
-  float dy;
+  float dx = (xmax - xmin) / width;
+  float dy = (ymax - ymin) / height;
+  float y = ymax;
 
-  float y;
-  float x;
-
-
-  dx = (xmax - xmin)/width;
-  dy = (ymax - ymin)/height;
-
-  y = ymax;
-  
   while (y >= ymin) {
-    x = xmin;
-
+    float x = xmin;
     while (x < xmax) {
-      if (in_mandelbrot(x, y, threshhold)) {
+      if (in_mandelbrot(x, y, threshold)) {
         printf("*");
       } else {
         printf(".");
@@ -54,18 +43,17 @@ void mandel() {
     }
     printf("\n");
     y = y - dy;
-         
   }
 }
 
-void main() {
+int main() {
   xmin = -2.0;
   xmax = 1.0;
   ymin = -1.5;
   ymax = 1.5;
   width = 80.0;
   height = 40.0;
-  threshhold = 1000;
-
+  threshold = 1000;
   mandel();
+  return 0;
 }

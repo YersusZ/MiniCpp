@@ -1,6 +1,6 @@
 // isqrt.mcc
 
-int num;
+float num;
 
 /* ********************************************* *
  * Función: Raiz cuadrada entera.                *
@@ -10,13 +10,13 @@ int num;
  * ********************************************* *
  */
 
- int isqrt(int x) {
-    int guess;
-    int xprev;
+float isqrt(float x) {
+    float guess;
+    float xprev;
 
     xprev = x; 
     // evitar que sqrt de numeros negativos
-    if (x < 0){
+    if (x > 0){
       guess = xprev / 2;
       while (guess != xprev) {
          xprev = guess;
@@ -26,8 +26,10 @@ int num;
     }
  }
 
- void main() {
-    int x;
-    num = 2;
+int main() {
+    float x;
+    num = 500.0;
     x = isqrt(num);
+    printf("La raiz cuadrada es: %f", x);
+    return 0;
  }

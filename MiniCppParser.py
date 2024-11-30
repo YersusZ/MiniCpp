@@ -89,7 +89,7 @@ class Parser(sly.Parser):
     def var_decl(self, p):
         return ArrayDeclStmt(p.type_spec, p.IDENT)
     
-    @_("VOID", "BOOL", "INT", "FLOAT", "CHAR")
+    @_("VOID", "BOOL", "INT", "FLOAT", "STR")
     def type_spec(self, p):
         return p[0]
     
@@ -376,7 +376,7 @@ class Parser(sly.Parser):
 def parse(source):
     lex = Lexer()
     pas = Parser()
-
+    
     program = pas.parse(lex.tokenize(source))
     return program
 

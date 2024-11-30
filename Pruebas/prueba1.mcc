@@ -1,7 +1,14 @@
 
 int main(){
-    int a = 0;
-    
-    printf("Hola");
+    int i = 0;
+    while(i<100){
+        if (i % 2 == 0){
+            printf("\nes par: %d", i);
+        }
+        else{
+            printf("\nes impar: %d", i);
+        }
+        i++;
+    }
     return 0;
 }

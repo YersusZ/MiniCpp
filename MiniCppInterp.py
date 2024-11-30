@@ -44,12 +44,15 @@ class Function:
 
   @property
   def arity(self) -> int:
+    if self.node.params is None:
+      self.node.params = []
     return len(self.node.params)
 
   def __call__(self, interp, *args):
-    newenv = self.env.new_child()
+    newenv = self.env
     for name, arg in zip(self.node.params, args):
-      newenv[name] = arg
+      if isinstance(name, VarDeclStmt):
+        newenv[name.ident] = arg
 
     oldenv = interp.env
     interp.env = newenv
@@ -66,6 +69,9 @@ class Function:
     env = self.env.new_child()
     env['this'] = instance
     return Function(self.node, env)
+  
+  def is_main(self) -> bool:
+    return self.node.ident == "main" and self.arity == 0
 
 
 class Class:
@@ -122,16 +128,16 @@ class Interpreter(Visitor):
     self.localmap  = { }
 
   def _check_numeric_operands(self, node, left, right):
-    if isinstance(left, (int, float)) and isinstance(right, (int, float)):
+    if isinstance(left, (int, float)) and isinstance(right, (int, float)) or left is None or right is None:
       return True
     else:
-      self.error(node, f"En '{node.op}' los operandos deben ser numeros")
+      self.error(node, f"En '{node.opr}' los operandos deben ser numeros")
 
   def _check_numeric_operand(self, node, value):
     if isinstance(value, (int, float)):
       return True
     else:
-      self.error(node, f"En '{node.op}' el operando debe ser un numero")
+      self.error(node, f"En '{node.opr}' el operando debe ser un numero")
 
   def error(self, position, message):
     self.ctxt.error(position, message)
@@ -156,11 +162,18 @@ class Interpreter(Visitor):
       print("\nReturn: ", e.value)
     except MiniCExit as e:
       pass
+    
+    main = self.env.get('main')
+    if main and isinstance(main, Function) and main.is_main():
+      main(self)
+    else:
+      raise MiniCExit()
 
   # Declarations
   def visit(self, node: Program):
     for decl in node.decls:
-      self.visit(decl)
+      decl.accept(self)
+      
       
   def visit(self, node: ClassDeclStmt):
     if node.sclass:
@@ -180,58 +193,74 @@ class Interpreter(Visitor):
   def visit(self, node: FuncDeclStmt):
     func = Function(node, self.env)
     self.env[node.ident] = func
-    node.stmts.accept(self)
-    print(self.env)
 
   def visit(self, node: VarDeclStmt):
     if node.expr:
-      expr = self.visit(node.expr)
+        expr = node.expr.accept(self)
     else:
-      expr = None
+        expr = None
+      
+    if id(node) not in self.localmap:
+      self.localmap[id(node)] = len(self.env.maps) - 1
     self.env[node.ident] = expr
-    print(self.env)
+
 
   # Statements
 
   def visit(self, node: CompoundStmt):
-    self.env = self.env.new_child()
-    for stmt in node.stmts:
-      stmt.accept(self)
+    if self.env.get('incycle') is False or None or self.env.get('ifstmt') is False or None:
+        self.env = self.env.new_child()
+    
     for decl in node.decls:
       decl.accept(self)
-    self.env = self.env.parents
+    
+    for stmt in node.stmts:
+      stmt.accept(self)
+    
+    if self.env.get('incycle') is False or None or self.env.get('ifstmt') is False or None:
+        self.env = self.env.parents
 
   def visit(self, node: PrintfStmt):
+    error = False
     expr = node.string
     for arg in node.args:
-      arg = self.visit(arg)
+      arg = arg.accept(self)
+      if arg is None:
+        error = True
       if isinstance(arg, int):
         expr = expr.replace('%d', str(arg), 1)
       elif isinstance(arg, str):
         expr = expr.replace('%s', arg, 1)
-      else:
+      elif isinstance(arg, float):
         expr = expr.replace('%f', str(arg), 1)
+      else:
+        error = True
       
     if isinstance(expr, str):
       expr = expr.replace('\\n', '\n')
       expr = expr.replace('\\t', '\t')
-    print(expr, end='')
+    if not error:
+      print(expr, end='')
 
   def visit(self, node: WhileStmt):
+    self.env['incycle'] = True
     while _is_truthy(node.expr.accept(self)):
       try:
         node.stmt.accept(self)
       except BreakException:
         return
       except ContinueException:
-        raise NotImplementedError
+        continue
+    self.env['incycle'] = False
 
   def visit(self, node: IfStmt):
+    self.env['ifstmt'] = True
     expr = node.expr.accept(self)
     if _is_truthy(expr):
-      node.then_stmt.accept(self)
-    elif node.else_stmt:
-      node.else_stmt.accept(self)
+      node.then.accept(self)
+    elif node.else_:
+      node.else_.accept(self)
+    self.env['ifstmt'] = False
 
   def visit(self, node: BreakStmt):
     raise BreakException()
@@ -246,58 +275,76 @@ class Interpreter(Visitor):
 
   def visit(self, node: ExprStmt):
     node.expr.accept(self)
-
+    
+  def visit(self, node: NullStmt):
+    pass
+  
+  def visit(self, node: ForStmt):
+    self.env['incycle'] = True
+    node.init.accept(self)
+    while _is_truthy(node.cond.accept(self)):
+      try:
+        node.stmt.accept(self)
+      except BreakException:
+        return
+      except ContinueException:
+        node.iter.accept(self)
+        continue
+      node.iter.accept(self)
+    self.env['incycle'] = False
+    
   # Expressions
-
   def visit(self, node: ConstExpr):
     return node.value
 
   def visit(self, node: BinaryOpExpr):
     left  = node.left.accept(self)
     right = node.right.accept(self)
+    if left is None or right is None:
+      return None
 
-    if node.op == '+':
+    if node.opr == '+':
       (isinstance(left, str) and isinstance(right, str)) or self._check_numeric_operands(node, left, right)
       return left + right
 
-    elif node.op == '-':
+    elif node.opr == '-':
       self._check_numeric_operands(node, left, right)
       return left - right
 
-    elif node.op == '*':
+    elif node.opr == '*':
       self._check_numeric_operands(node, left, right)
       return left * right
 
-    elif node.op == '/':
+    elif node.opr == '/':
       self._check_numeric_operands(node, left, right)
       if isinstance(left, int) and isinstance(right, int):
         return left // right
 
       return left / right
 
-    elif node.op == '%':
+    elif node.opr == '%':
       self._check_numeric_operands(node, left, right)
       return left % right
 
-    elif node.op == '==':
+    elif node.opr == '==':
       return left == right
 
-    elif node.op == '!=':
+    elif node.opr == '!=':
       return left != right
 
-    elif node.op == '<':
+    elif node.opr == '<':
       self._check_numeric_operands(node, left, right)
       return left < right
 
-    elif node.op == '>':
+    elif node.opr == '>':
       self._check_numeric_operands(node, left, right)
       return left > right
 
-    elif node.op == '<=':
+    elif node.opr == '<=':
       self._check_numeric_operands(node, left, right)
       return left <= right
 
-    elif node.op == '>=':
+    elif node.opr == '>=':
       self._check_numeric_operands(node, left, right)
       return left >= right
 
@@ -314,10 +361,10 @@ class Interpreter(Visitor):
 
   def visit(self, node: UnaryOpExpr):
     expr = node.expr.accept(self)
-    if node.op == "-":
+    if node.opr == "-":
       self._check_numeric_operand(node, expr)
       return - expr
-    elif node.op == "!":
+    elif node.opr == "!":
       return not _is_truthy(expr)
     else:
       raise NotImplementedError(f"Mal operador {node.op}")
@@ -327,59 +374,70 @@ class Interpreter(Visitor):
 
   def visit(self, node: VarAssignmentExpr):
     expr = node.expr.accept(self)
+    if id(node) not in self.localmap:
+      self.localmap[id(node)] = len(self.env.maps) - 1
     self.env.maps[self.localmap[id(node)]][node.var] = expr
+    return expr
+    
     
   def visit(self, node: OperatorAssign):
     expr = node.expr1.accept(self)
     if node.op == '+=':
-      self.env.maps[self.localmap[id(node)]][node.expr0] += expr
+      self.env.maps[self.localmap[id(node)]][node.expr] += expr
     elif node.op == '-=':
-      self.env.maps[self.localmap[id(node)]][node.expr0] -= expr
+      self.env.maps[self.localmap[id(node)]][node.expr] -= expr
     elif node.op == '*=':
-      self.env.maps[self.localmap[id(node)]][node.expr0] *= expr
+      self.env.maps[self.localmap[id(node)]][node.expr] *= expr
     elif node.op == '/=':
-      self.env.maps[self.localmap[id(node)]][node.expr0] /= expr
+      self.env.maps[self.localmap[id(node)]][node.expr] /= expr
     elif node.op == '%=':
-      self.env.maps[self.localmap[id(node)]][node.expr0] %= expr
+      self.env.maps[self.localmap[id(node)]][node.expr] %= expr
 
   def visit(self, node: PreInc):
-    self.env.maps[self.localmap[id(node)]][node.name] += 1
-    return self.env.maps[self.localmap[id(node)]][node.name]
+    if id(node) not in self.localmap:
+        self.localmap[id(node)] = len(self.env.maps) - 1
+    self.env.maps[self.localmap[id(node)]][node.ident] += 1
+    return self.env.maps[self.localmap[id(node)]][node.expr]
 
   def visit(self, node: PreDec):
-    self.env.maps[self.localmap[id(node)]][node.name] -= 1
-    return self.env.maps[self.localmap[id(node)]][node.name]
+    if id(node) not in self.localmap:
+        self.localmap[id(node)] = len(self.env.maps) - 1
+    self.env.maps[self.localmap[id(node)]][node.expr] -= 1
+    return self.env.maps[self.localmap[id(node)]][node.expr]
 
   def visit(self, node: PostInc):
-    ret = self.env.maps[self.localmap[id(node)]][node.name]
-    self.env.maps[self.localmap[id(node)]][node.name] += 1
-    return ret
+    if id(node) not in self.localmap:
+     self.localmap[id(node)] = len(self.env.maps) -1 
+    self.env.maps[self.localmap[id(node)]][node.expr.ident] += 1
+    print(self.env)
+    print(self.localmap)
+    return self.env.maps[self.localmap[id(node)]][node.expr.ident]
 
   def visit(self, node: PostDec):
-    ret = self.env.maps[self.localmap[id(node)]][node.name]
-    self.env.maps[self.localmap[id(node)]][node.name] -= 1
-    return ret
+    if id(node) not in self.localmap:
+        self.localmap[id(node)] = len(self.env.maps) - 1
+    self.env.maps[self.localmap[id(node)]][node.expr] -= 1
+    return self.env.maps[self.localmap[id(node)]][node.expr]
 
   def visit(self, node: CallExpr):
-    callee = node.func.accept(self)
+    callee = self.env[node.ident]
     if not callable(callee):
-      self.error(node.func, f'{self.ctxt.find_source(node.func)!r} no es invocable')
+      self.error(node.ident, f'{self.ctxt.find_source(node.ident)!r} no es invocable')
 
     args = [ arg.accept(self) for arg in node.args ]
 
     if callee.arity != -1 and len(args) != callee.arity:
-      self.error(node.func, f"Experado {callee.arity} argumentos")
-
+      self.error(node.ident, f"Experado {callee.arity} argumentos")
+      
     try:
       return callee(self, *args)
     except CallError as err:
-      self.error(node.func, str(err))
+      self.error(node.ident, str(err))
 
   def visit(self, node: VarExpr):
-      try:
-        return self.env.maps[self.localmap[id(node)]][node.ident]
-      except KeyError:
-          self.error(node, f"{self.env} no esta definido")
+    if id(node) not in self.localmap:
+      self.localmap[id(node)] = len(self.env.maps) - 1
+    return self.env.maps[self.localmap[id(node)]][node.ident]
 
   def visit(self, node: Set):
     obj = node.obj.accept(self)

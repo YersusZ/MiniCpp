@@ -21,7 +21,7 @@ Rule 17    var_decl -> type_spec IDENT [ ] ;
 Rule 18    var_decl -> type_spec IDENT _2_0x3d_expr_optional ;
 Rule 19    _2_0x3d_expr_optional -> = expr  [precedence=right, level=10]
 Rule 20    _2_0x3d_expr_optional -> <empty>
-Rule 21    type_spec -> CHAR
+Rule 21    type_spec -> STR
 Rule 22    type_spec -> FLOAT
 Rule 23    type_spec -> INT
 Rule 24    type_spec -> BOOL
@@ -145,7 +145,6 @@ BOOL                 : 24
 BOOL_LIT             : 80
 BREAK                : 66
 CAST                 : 81
-CHAR                 : 21
 CLASS                : 7
 CONTINUE             : 65
 DIVEQ                : 68
@@ -175,6 +174,7 @@ RETURN               : 63 64
 SCANF                : 118
 SIZE                 : 85
 SPRINTF              : 119
+STR                  : 21
 STRING               : 77 114 115 118 119
 SUPER                : 84
 THIS                 : 107
@@ -242,13 +242,13 @@ state 0
     (26) func_decl -> . type_spec IDENT ( _3_params_optional ) compound_stmt
     (17) var_decl -> . type_spec IDENT [ ] ;
     (18) var_decl -> . type_spec IDENT _2_0x3d_expr_optional ;
-    (21) type_spec -> . CHAR
+    (21) type_spec -> . STR
     (22) type_spec -> . FLOAT
     (23) type_spec -> . INT
     (24) type_spec -> . BOOL
     (25) type_spec -> . VOID
     CLASS           shift and go to state 7
-    CHAR            shift and go to state 9
+    STR             shift and go to state 9
     FLOAT           shift and go to state 10
     INT             shift and go to state 11
     BOOL            shift and go to state 12
@@ -278,14 +278,14 @@ state 2
     (26) func_decl -> . type_spec IDENT ( _3_params_optional ) compound_stmt
     (17) var_decl -> . type_spec IDENT [ ] ;
     (18) var_decl -> . type_spec IDENT _2_0x3d_expr_optional ;
-    (21) type_spec -> . CHAR
+    (21) type_spec -> . STR
     (22) type_spec -> . FLOAT
     (23) type_spec -> . INT
     (24) type_spec -> . BOOL
     (25) type_spec -> . VOID
     $end            reduce using rule 1 (program -> decl_list .)
     CLASS           shift and go to state 7
-    CHAR            shift and go to state 9
+    STR             shift and go to state 9
     FLOAT           shift and go to state 10
     INT             shift and go to state 11
     BOOL            shift and go to state 12
@@ -301,7 +301,7 @@ state 3
 
     (2) decl_list -> decl .
     CLASS           reduce using rule 2 (decl_list -> decl .)
-    CHAR            reduce using rule 2 (decl_list -> decl .)
+    STR             reduce using rule 2 (decl_list -> decl .)
     FLOAT           reduce using rule 2 (decl_list -> decl .)
     INT             reduce using rule 2 (decl_list -> decl .)
     BOOL            reduce using rule 2 (decl_list -> decl .)
@@ -313,7 +313,7 @@ state 4
 
     (4) decl -> class_decl .
     CLASS           reduce using rule 4 (decl -> class_decl .)
-    CHAR            reduce using rule 4 (decl -> class_decl .)
+    STR             reduce using rule 4 (decl -> class_decl .)
     FLOAT           reduce using rule 4 (decl -> class_decl .)
     INT             reduce using rule 4 (decl -> class_decl .)
     BOOL            reduce using rule 4 (decl -> class_decl .)
@@ -325,7 +325,7 @@ state 5
 
     (5) decl -> func_decl .
     CLASS           reduce using rule 5 (decl -> func_decl .)
-    CHAR            reduce using rule 5 (decl -> func_decl .)
+    STR             reduce using rule 5 (decl -> func_decl .)
     FLOAT           reduce using rule 5 (decl -> func_decl .)
     INT             reduce using rule 5 (decl -> func_decl .)
     BOOL            reduce using rule 5 (decl -> func_decl .)
@@ -337,7 +337,7 @@ state 6
 
     (6) decl -> var_decl .
     CLASS           reduce using rule 6 (decl -> var_decl .)
-    CHAR            reduce using rule 6 (decl -> var_decl .)
+    STR             reduce using rule 6 (decl -> var_decl .)
     FLOAT           reduce using rule 6 (decl -> var_decl .)
     INT             reduce using rule 6 (decl -> var_decl .)
     BOOL            reduce using rule 6 (decl -> var_decl .)
@@ -361,10 +361,10 @@ state 8
 
 state 9
 
-    (21) type_spec -> CHAR .
-    IDENT           reduce using rule 21 (type_spec -> CHAR .)
-    [               reduce using rule 21 (type_spec -> CHAR .)
-    (               reduce using rule 21 (type_spec -> CHAR .)
+    (21) type_spec -> STR .
+    IDENT           reduce using rule 21 (type_spec -> STR .)
+    [               reduce using rule 21 (type_spec -> STR .)
+    (               reduce using rule 21 (type_spec -> STR .)
 
 
 state 10
@@ -403,7 +403,7 @@ state 14
 
     (3) decl_list -> decl_list decl .
     CLASS           reduce using rule 3 (decl_list -> decl_list decl .)
-    CHAR            reduce using rule 3 (decl_list -> decl_list decl .)
+    STR             reduce using rule 3 (decl_list -> decl_list decl .)
     FLOAT           reduce using rule 3 (decl_list -> decl_list decl .)
     INT             reduce using rule 3 (decl_list -> decl_list decl .)
     BOOL            reduce using rule 3 (decl_list -> decl_list decl .)
@@ -466,14 +466,14 @@ state 20
     (32) param_list -> . param_list , param
     (33) param -> . type_spec IDENT [ ]
     (34) param -> . type_spec IDENT
-    (21) type_spec -> . CHAR
+    (21) type_spec -> . STR
     (22) type_spec -> . FLOAT
     (23) type_spec -> . INT
     (24) type_spec -> . BOOL
     (25) type_spec -> . VOID
     )               reduce using rule 28 (_3_params_optional -> .)
     VOID            shift and go to state 29
-    CHAR            shift and go to state 9
+    STR             shift and go to state 9
     FLOAT           shift and go to state 10
     INT             shift and go to state 11
     BOOL            shift and go to state 12
@@ -571,12 +571,12 @@ state 24
     (12) class_member_list -> . class_member_list class_member
     (13) class_member -> . method_decl
     (14) method_decl -> . type_spec IDENT ( _1_params_optional ) compound_stmt
-    (21) type_spec -> . CHAR
+    (21) type_spec -> . STR
     (22) type_spec -> . FLOAT
     (23) type_spec -> . INT
     (24) type_spec -> . BOOL
     (25) type_spec -> . VOID
-    CHAR            shift and go to state 9
+    STR             shift and go to state 9
     FLOAT           shift and go to state 10
     INT             shift and go to state 11
     BOOL            shift and go to state 12
@@ -646,7 +646,7 @@ state 33
 
     (18) var_decl -> type_spec IDENT _2_0x3d_expr_optional ; .
     CLASS           reduce using rule 18 (var_decl -> type_spec IDENT _2_0x3d_expr_optional ; .)
-    CHAR            reduce using rule 18 (var_decl -> type_spec IDENT _2_0x3d_expr_optional ; .)
+    STR             reduce using rule 18 (var_decl -> type_spec IDENT _2_0x3d_expr_optional ; .)
     FLOAT           reduce using rule 18 (var_decl -> type_spec IDENT _2_0x3d_expr_optional ; .)
     INT             reduce using rule 18 (var_decl -> type_spec IDENT _2_0x3d_expr_optional ; .)
     BOOL            reduce using rule 18 (var_decl -> type_spec IDENT _2_0x3d_expr_optional ; .)
@@ -947,12 +947,12 @@ state 39
 state 40
 
     (76) expr -> NEW . type_spec [ expr ]
-    (21) type_spec -> . CHAR
+    (21) type_spec -> . STR
     (22) type_spec -> . FLOAT
     (23) type_spec -> . INT
     (24) type_spec -> . BOOL
     (25) type_spec -> . VOID
-    CHAR            shift and go to state 9
+    STR             shift and go to state 9
     FLOAT           shift and go to state 10
     INT             shift and go to state 11
     BOOL            shift and go to state 12
@@ -1079,12 +1079,12 @@ state 44
 state 45
 
     (81) expr -> CAST . type_spec ( expr )
-    (21) type_spec -> . CHAR
+    (21) type_spec -> . STR
     (22) type_spec -> . FLOAT
     (23) type_spec -> . INT
     (24) type_spec -> . BOOL
     (25) type_spec -> . VOID
-    CHAR            shift and go to state 9
+    STR             shift and go to state 9
     FLOAT           shift and go to state 10
     INT             shift and go to state 11
     BOOL            shift and go to state 12
@@ -1352,13 +1352,13 @@ state 54
     (12) class_member_list -> class_member_list . class_member
     (13) class_member -> . method_decl
     (14) method_decl -> . type_spec IDENT ( _1_params_optional ) compound_stmt
-    (21) type_spec -> . CHAR
+    (21) type_spec -> . STR
     (22) type_spec -> . FLOAT
     (23) type_spec -> . INT
     (24) type_spec -> . BOOL
     (25) type_spec -> . VOID
     }               reduce using rule 10 (class_body -> class_member_list .)
-    CHAR            shift and go to state 9
+    STR             shift and go to state 9
     FLOAT           shift and go to state 10
     INT             shift and go to state 11
     BOOL            shift and go to state 12
@@ -1371,7 +1371,7 @@ state 54
 state 55
 
     (11) class_member_list -> class_member .
-    CHAR            reduce using rule 11 (class_member_list -> class_member .)
+    STR             reduce using rule 11 (class_member_list -> class_member .)
     FLOAT           reduce using rule 11 (class_member_list -> class_member .)
     INT             reduce using rule 11 (class_member_list -> class_member .)
     BOOL            reduce using rule 11 (class_member_list -> class_member .)
@@ -1382,7 +1382,7 @@ state 55
 state 56
 
     (13) class_member -> method_decl .
-    CHAR            reduce using rule 13 (class_member -> method_decl .)
+    STR             reduce using rule 13 (class_member -> method_decl .)
     FLOAT           reduce using rule 13 (class_member -> method_decl .)
     INT             reduce using rule 13 (class_member -> method_decl .)
     BOOL            reduce using rule 13 (class_member -> method_decl .)
@@ -1418,12 +1418,12 @@ state 60
     (32) param_list -> param_list , . param
     (33) param -> . type_spec IDENT [ ]
     (34) param -> . type_spec IDENT
-    (21) type_spec -> . CHAR
+    (21) type_spec -> . STR
     (22) type_spec -> . FLOAT
     (23) type_spec -> . INT
     (24) type_spec -> . BOOL
     (25) type_spec -> . VOID
-    CHAR            shift and go to state 9
+    STR             shift and go to state 9
     FLOAT           shift and go to state 10
     INT             shift and go to state 11
     BOOL            shift and go to state 12
@@ -1436,7 +1436,7 @@ state 61
 
     (17) var_decl -> type_spec IDENT [ ] ; .
     CLASS           reduce using rule 17 (var_decl -> type_spec IDENT [ ] ; .)
-    CHAR            reduce using rule 17 (var_decl -> type_spec IDENT [ ] ; .)
+    STR             reduce using rule 17 (var_decl -> type_spec IDENT [ ] ; .)
     FLOAT           reduce using rule 17 (var_decl -> type_spec IDENT [ ] ; .)
     INT             reduce using rule 17 (var_decl -> type_spec IDENT [ ] ; .)
     BOOL            reduce using rule 17 (var_decl -> type_spec IDENT [ ] ; .)
@@ -3262,7 +3262,7 @@ state 97
 state 98
 
     (12) class_member_list -> class_member_list class_member .
-    CHAR            reduce using rule 12 (class_member_list -> class_member_list class_member .)
+    STR             reduce using rule 12 (class_member_list -> class_member_list class_member .)
     FLOAT           reduce using rule 12 (class_member_list -> class_member_list class_member .)
     INT             reduce using rule 12 (class_member_list -> class_member_list class_member .)
     BOOL            reduce using rule 12 (class_member_list -> class_member_list class_member .)
@@ -3286,7 +3286,7 @@ state 101
 
     (26) func_decl -> type_spec IDENT ( _3_params_optional ) compound_stmt .
     CLASS           reduce using rule 26 (func_decl -> type_spec IDENT ( _3_params_optional ) compound_stmt .)
-    CHAR            reduce using rule 26 (func_decl -> type_spec IDENT ( _3_params_optional ) compound_stmt .)
+    STR             reduce using rule 26 (func_decl -> type_spec IDENT ( _3_params_optional ) compound_stmt .)
     FLOAT           reduce using rule 26 (func_decl -> type_spec IDENT ( _3_params_optional ) compound_stmt .)
     INT             reduce using rule 26 (func_decl -> type_spec IDENT ( _3_params_optional ) compound_stmt .)
     BOOL            reduce using rule 26 (func_decl -> type_spec IDENT ( _3_params_optional ) compound_stmt .)
@@ -3304,7 +3304,7 @@ state 102
     (39) local_decl_list -> . local_decl_list local_decl
     (40) local_decl -> . type_spec IDENT [ ] ;
     (41) local_decl -> . type_spec IDENT _4_0x3d_expr_optional ;
-    (21) type_spec -> . CHAR
+    (21) type_spec -> . STR
     (22) type_spec -> . FLOAT
     (23) type_spec -> . INT
     (24) type_spec -> . BOOL
@@ -3338,7 +3338,7 @@ state 102
     -               reduce using rule 120 (empty -> .)
     !               reduce using rule 120 (empty -> .)
     THIS            reduce using rule 120 (empty -> .)
-    CHAR            shift and go to state 9
+    STR             shift and go to state 9
     FLOAT           shift and go to state 10
     INT             shift and go to state 11
     BOOL            shift and go to state 12
@@ -4659,7 +4659,7 @@ state 135
 
     (7) class_decl -> CLASS IDENT sclass_opt { class_body } ; .
     CLASS           reduce using rule 7 (class_decl -> CLASS IDENT sclass_opt { class_body } ; .)
-    CHAR            reduce using rule 7 (class_decl -> CLASS IDENT sclass_opt { class_body } ; .)
+    STR             reduce using rule 7 (class_decl -> CLASS IDENT sclass_opt { class_body } ; .)
     FLOAT           reduce using rule 7 (class_decl -> CLASS IDENT sclass_opt { class_body } ; .)
     INT             reduce using rule 7 (class_decl -> CLASS IDENT sclass_opt { class_body } ; .)
     BOOL            reduce using rule 7 (class_decl -> CLASS IDENT sclass_opt { class_body } ; .)
@@ -4678,14 +4678,14 @@ state 136
     (32) param_list -> . param_list , param
     (33) param -> . type_spec IDENT [ ]
     (34) param -> . type_spec IDENT
-    (21) type_spec -> . CHAR
+    (21) type_spec -> . STR
     (22) type_spec -> . FLOAT
     (23) type_spec -> . INT
     (24) type_spec -> . BOOL
     (25) type_spec -> . VOID
     )               reduce using rule 16 (_1_params_optional -> .)
     VOID            shift and go to state 29
-    CHAR            shift and go to state 9
+    STR             shift and go to state 9
     FLOAT           shift and go to state 10
     INT             shift and go to state 11
     BOOL            shift and go to state 12
@@ -4861,7 +4861,7 @@ state 140
     (39) local_decl_list -> local_decl_list . local_decl
     (40) local_decl -> . type_spec IDENT [ ] ;
     (41) local_decl -> . type_spec IDENT _4_0x3d_expr_optional ;
-    (21) type_spec -> . CHAR
+    (21) type_spec -> . STR
     (22) type_spec -> . FLOAT
     (23) type_spec -> . INT
     (24) type_spec -> . BOOL
@@ -4895,7 +4895,7 @@ state 140
     -               reduce using rule 37 (local_decls -> local_decl_list .)
     !               reduce using rule 37 (local_decls -> local_decl_list .)
     THIS            reduce using rule 37 (local_decls -> local_decl_list .)
-    CHAR            shift and go to state 9
+    STR             shift and go to state 9
     FLOAT           shift and go to state 10
     INT             shift and go to state 11
     BOOL            shift and go to state 12
@@ -4907,7 +4907,7 @@ state 140
 state 141
 
     (38) local_decl_list -> local_decl .
-    CHAR            reduce using rule 38 (local_decl_list -> local_decl .)
+    STR             reduce using rule 38 (local_decl_list -> local_decl .)
     FLOAT           reduce using rule 38 (local_decl_list -> local_decl .)
     INT             reduce using rule 38 (local_decl_list -> local_decl .)
     BOOL            reduce using rule 38 (local_decl_list -> local_decl .)
@@ -6044,7 +6044,7 @@ state 176
 state 177
 
     (39) local_decl_list -> local_decl_list local_decl .
-    CHAR            reduce using rule 39 (local_decl_list -> local_decl_list local_decl .)
+    STR             reduce using rule 39 (local_decl_list -> local_decl_list local_decl .)
     FLOAT           reduce using rule 39 (local_decl_list -> local_decl_list local_decl .)
     INT             reduce using rule 39 (local_decl_list -> local_decl_list local_decl .)
     BOOL            reduce using rule 39 (local_decl_list -> local_decl_list local_decl .)
@@ -6327,7 +6327,7 @@ state 185
 
     (35) compound_stmt -> { local_decls stmt_list } .
     CLASS           reduce using rule 35 (compound_stmt -> { local_decls stmt_list } .)
-    CHAR            reduce using rule 35 (compound_stmt -> { local_decls stmt_list } .)
+    STR             reduce using rule 35 (compound_stmt -> { local_decls stmt_list } .)
     FLOAT           reduce using rule 35 (compound_stmt -> { local_decls stmt_list } .)
     INT             reduce using rule 35 (compound_stmt -> { local_decls stmt_list } .)
     BOOL            reduce using rule 35 (compound_stmt -> { local_decls stmt_list } .)
@@ -6469,7 +6469,7 @@ state 190
     (107) expr -> . THIS
     (108) expr -> . IDENT [ expr ] = expr
     (109) expr -> . IDENT = expr
-    (21) type_spec -> . CHAR
+    (21) type_spec -> . STR
     (22) type_spec -> . FLOAT
     (23) type_spec -> . INT
     (24) type_spec -> . BOOL
@@ -6492,7 +6492,7 @@ state 190
     -               shift and go to state 50
     !               shift and go to state 51
     THIS            shift and go to state 52
-    CHAR            shift and go to state 9
+    STR             shift and go to state 9
     FLOAT           shift and go to state 10
     INT             shift and go to state 11
     BOOL            shift and go to state 12
@@ -6956,7 +6956,7 @@ state 201
 state 202
 
     (14) method_decl -> type_spec IDENT ( _1_params_optional ) compound_stmt .
-    CHAR            reduce using rule 14 (method_decl -> type_spec IDENT ( _1_params_optional ) compound_stmt .)
+    STR             reduce using rule 14 (method_decl -> type_spec IDENT ( _1_params_optional ) compound_stmt .)
     FLOAT           reduce using rule 14 (method_decl -> type_spec IDENT ( _1_params_optional ) compound_stmt .)
     INT             reduce using rule 14 (method_decl -> type_spec IDENT ( _1_params_optional ) compound_stmt .)
     BOOL            reduce using rule 14 (method_decl -> type_spec IDENT ( _1_params_optional ) compound_stmt .)
@@ -7237,7 +7237,7 @@ state 211
 state 212
 
     (41) local_decl -> type_spec IDENT _4_0x3d_expr_optional ; .
-    CHAR            reduce using rule 41 (local_decl -> type_spec IDENT _4_0x3d_expr_optional ; .)
+    STR             reduce using rule 41 (local_decl -> type_spec IDENT _4_0x3d_expr_optional ; .)
     FLOAT           reduce using rule 41 (local_decl -> type_spec IDENT _4_0x3d_expr_optional ; .)
     INT             reduce using rule 41 (local_decl -> type_spec IDENT _4_0x3d_expr_optional ; .)
     BOOL            reduce using rule 41 (local_decl -> type_spec IDENT _4_0x3d_expr_optional ; .)
@@ -7545,7 +7545,7 @@ state 221
 state 222
 
     (40) local_decl -> type_spec IDENT [ ] ; .
-    CHAR            reduce using rule 40 (local_decl -> type_spec IDENT [ ] ; .)
+    STR             reduce using rule 40 (local_decl -> type_spec IDENT [ ] ; .)
     FLOAT           reduce using rule 40 (local_decl -> type_spec IDENT [ ] ; .)
     INT             reduce using rule 40 (local_decl -> type_spec IDENT [ ] ; .)
     BOOL            reduce using rule 40 (local_decl -> type_spec IDENT [ ] ; .)

@@ -83,7 +83,7 @@ class Checker(Visitor):
         env.define('printf', True)
         for decl in n.decls:
             decl.accept(self, env)
-        if not env.lookup('main'):
+        if not env.lookup('main') or env.lookup('main')._type != 'int':
             try:
                 raise CheckError("No se encontró la función 'main'.")
             except CheckError as err:
@@ -288,7 +288,7 @@ class Checker(Visitor):
                 console = Console()
                 console.print(err.message)
         
-        if not isinstance(n.iter, (PostDec, PreDec, PostInc, PreInc)):
+        if not isinstance(n.iter, (PostDec, PreDec, PostInc, PreInc, VarAssignmentExpr)):
             try:
                 raise CheckError('Debe ser un incremento/decremento.')
             except CheckError as err:
@@ -342,10 +342,14 @@ class Checker(Visitor):
     #==================================================================================================================
     
     def visit(self, n: BinaryOpExpr, env: SymbolTable):
-        n.left.accept(self, env)
-        n.right.accept(self, env)
+        expr_type_left = n.left.accept(self, env)
+        expr_type_right = n.right.accept(self, env)
         expr_type_left = self.resolve_type(n.left, env)
         expr_type_right = self.resolve_type(n.right, env)
+        if expr_type_left == 'int' and expr_type_right == 'float':
+            expr_type_left = 'float'
+        if expr_type_left == 'float' and expr_type_right == 'int':
+            expr_type_right = 'float'
         if expr_type_left != expr_type_right:
             try:
                 raise CheckError(f"tipos incompatibles: {n.left} {expr_type_left} = {expr_type_right} {n.right}.")
@@ -353,6 +357,11 @@ class Checker(Visitor):
                 console = Console()
                 console.print(err.message)
         
+        if expr_type_left == 'int' and expr_type_right == 'float':
+            expr_type_left = 'float'
+        if expr_type_left == 'float' and expr_type_right == 'int':
+            expr_type_right = 'float'
+            
         result_type = check_binary_op(n.opr, expr_type_left, expr_type_right)
         if result_type is None:
             try:
@@ -609,11 +618,6 @@ class Checker(Visitor):
             except CheckError as err:
                 console = Console()
                 console.print(err.message)
-    
-    #==================================================================================================================
-                
-    def visit(self, n:ExprStmt, env: SymbolTable):
-        n.expr.accept(self, env)
         
     #==================================================================================================================
         
@@ -780,17 +784,17 @@ class Checker(Visitor):
     #==================================================================================================================
     
     def visit(self, n: SprintfStmt, env: SymbolTable):
-        char = env.lookup(n.ident)
-        if not char:
+        string = env.lookup(n.ident)
+        if not string:
             try:
                 raise CheckError(f"Variable '{n.ident}' no definida.")
             except CheckError as err:
                 console = Console()
                 console.print(err.message)
                 
-        if char._type != 'char':
+        if string._type != 'str':
             try:
-                raise CheckError(f"Variable '{n.ident}' no es un char.")
+                raise CheckError(f"Variable '{n.ident}' no es un string.")
             except CheckError as err:
                 console = Console()
                 console.print(err.message) 

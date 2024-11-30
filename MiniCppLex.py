@@ -13,7 +13,7 @@ class Lexer(sly.Lexer):
         # palabras reservadas
         'VOID', 'BOOL', 'INT', 'FLOAT', 'IF', 'ELSE', 'WHILE', 'RETURN', 'SPRINTF', 'INTTOFLOAT', 'CAST',
         'BREAK', 'CONTINUE', 'SIZE', 'NEW', 'CLASS', 'FOR', 'PRINTF', 'SCANF', 'SUPER', 'THIS', 'POINT',
-        'ARRAYSIZE', 'AMPERSAND', 'CHAR',
+        'ARRAYSIZE', 'AMPERSAND', 'STR',
 
         # Operadores de Relacion
         'AND', 'OR', 'EQ', 'NE', 'GE', 'LE',
@@ -93,7 +93,7 @@ class Lexer(sly.Lexer):
     IDENT['cast']     = 'CAST'
     IDENT['super']    = 'SUPER'
     IDENT['ArraySize'] = 'ARRAYSIZE'
-    IDENT['char'] = 'CHAR'
+    IDENT['str'] = 'STR'
 
     @_(r'((0(?!\d))|([1-9]\d*))((\.\d+(e[-+]?\d+)?)|([eE][-+]?\d+))')
     def FLOAT_LIT(self, t):

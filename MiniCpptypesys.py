@@ -28,6 +28,7 @@ _binary_ops = {
     ('-', 'int', 'int') : 'int',
     ('*', 'int', 'int') : 'int',
     ('/', 'int', 'int') : 'int',
+    ('%', 'int', 'int') : 'int',
 
     ('<',  'int', 'int') : 'bool',
     ('<=', 'int', 'int') : 'bool',
@@ -41,6 +42,7 @@ _binary_ops = {
     ('-', 'float', 'float') : 'float',
     ('*', 'float', 'float') : 'float',
     ('/', 'float', 'float') : 'float',
+    ('%', 'float', 'float') : 'float',
 
     ('<',  'float', 'float') : 'bool',
     ('<=', 'float', 'float') : 'bool',

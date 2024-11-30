@@ -575,7 +575,7 @@ class RenderTreeVisitor(Visitor):
 # =====================================================================
 
     def render(self, root_node):
-            tree = Tree("AST")
+            tree = Tree("[bold red] AST [/bold red]")
             self.visit(root_node, tree)
             console = Console()
             console.print(tree)
